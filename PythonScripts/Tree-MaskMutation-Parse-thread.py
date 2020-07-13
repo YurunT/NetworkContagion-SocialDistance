@@ -338,31 +338,6 @@ def start_infection_mutation(Trees, roots, trans_dict, infected_dict, mu_dict):
                         
 
 
-# ## Look at the infected result
-# 
-# change i to look at different sub-trees
-
-# In[18]:
-
-
-# i = 0
-# pos = nx.nx_agraph.graphviz_layout(Trees[i])
-
-# nx.draw(Trees[i], pos, with_labels = False)
-
-# # # Show nodes' attrs
-# node_labels = nx.get_node_attributes(Trees[i],'infected')
-# nx.draw_networkx_labels(Trees[i], pos, labels = node_labels)
-# print("root node:", roots[i])
-# # Show edges' attrs
-# edge_labels = nx.get_edge_attributes(Trees[i],'T')
-# nx.draw_networkx_edge_labels(Trees[i], pos, labels = edge_labels)
-
-
-# # Function 7: Calculate the Epidemic size for a G
-
-# In[19]:
-
 
 def cal_EpdSize_Trees(Trees):
     E_S = []

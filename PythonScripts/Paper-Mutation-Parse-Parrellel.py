@@ -13,7 +13,11 @@ from joblib import Parallel, delayed
 import multiprocessing, time
 from multiprocessing import Manager
 
+"""
+usage:
 
+python Paper-Mutation-Parse-Parrellel.py -n 10 -e 10 -t 0.01 -m 0.6 -T 0.6 -tm 0.5
+"""
 
 def create_network(mean_degree, num_nodes):
     degree_sequence = np.random.poisson(mean_degree, num_nodes)
@@ -93,26 +97,77 @@ def evolution(g, t_list, mutation_prob):
     num_infected1, num_infected2 = map(len, strain_list)
     return num_infected, num_infected1, num_infected2
 
+# def parse_args(args):
+#     parser = argparse.ArgumentParser(description = 'Parameters')
+#     parser.add_argument('-m', type = float, nargs = '+', default = np.arange(1, 10.1, 0.1), help='np.linspace(0.001, 7, 50) (default); list of mean degree: you can type 1 3 5')
+#     parser.add_argument('-n', type = int, default = 200000, help='10,000 (default); the number of nodes')
+#     parser.add_argument('-e', type = int, default = 50, help='100 (default); the number of experiments')
+#     parser.add_argument('-t1', type = float, default = 0.2, help='0.5 (default); the transmissibility of strain-1')
+#     parser.add_argument('-t2', type = float, default = 0.5, help='0.5 (default); the transmissibility of strain-2')
+#     parser.add_argument('-m1', type = float, default = 0.9, help='0.5 (default); the mutation probability from 1 to 1')
+#     parser.add_argument('-m2', type = float, default = 1.0, help='0.5 (default); the mutation probability from 2 to 2')
+#     parser.add_argument('-thrVal', type = float, default = 0.005, help='0.001 (default); the treshold to consider a component giant')
+#     parser.add_argument('-numCores', type = int, default = 12, help='number of Cores')
+#     parser.add_argument('-logName', default = 'logfile', help='The name of the log file')
+#     parser.add_argument('-i', type = int, default = 1, help='1 (default); starting from type-i node')
+#     return parser.parse_args(args)
+
 def parse_args(args):
+    '''
+    Added by Yurun
+    '''
     parser = argparse.ArgumentParser(description = 'Parameters')
-    parser.add_argument('-m', type = float, nargs = '+', default = np.arange(1, 10.1, 0.1), help='np.linspace(0.001, 7, 50) (default); list of mean degree: you can type 1 3 5')
-    parser.add_argument('-n', type = int, default = 200000, help='10,000 (default); the number of nodes')
-    parser.add_argument('-e', type = int, default = 50, help='100 (default); the number of experiments')
-    parser.add_argument('-t1', type = float, default = 0.2, help='0.5 (default); the transmissibility of strain-1')
-    parser.add_argument('-t2', type = float, default = 0.5, help='0.5 (default); the transmissibility of strain-2')
-    parser.add_argument('-m1', type = float, default = 0.9, help='0.5 (default); the mutation probability from 1 to 1')
-    parser.add_argument('-m2', type = float, default = 1.0, help='0.5 (default); the mutation probability from 2 to 2')
-    parser.add_argument('-thrVal', type = float, default = 0.005, help='0.001 (default); the treshold to consider a component giant')
+    parser.add_argument('-n', type = int, default = 200000, help='200,000 (default); the number of nodes')
+    parser.add_argument('-e', type = int, default = 50, help='50 (default); the number of experiments')
+    parser.add_argument('-m', type = float, default = 0.6, help='0.6 (default); the prob of wearing a mask')
+    parser.add_argument('-tm', type = float, default = 0.5, help='0.5 (default); T_mask')
+    parser.add_argument('-T', type = float, default = 0.6, help='0.6 (default); transmissibility of the orinigal virus')
+    parser.add_argument('-th', type = float, default = 0.001, help='0.001 (default); the treshold to consider a component giant')
     parser.add_argument('-numCores', type = int, default = 12, help='number of Cores')
-    parser.add_argument('-logName', default = 'logfile', help='The name of the log file')
-    parser.add_argument('-i', type = int, default = 1, help='1 (default); starting from type-i node')
     return parser.parse_args(args)
 
-####### Added by Yurun #######
+def generate_new_transmissibilities_mutation(T_mask, T, m):
+    '''
+    Added by Yurun
+    '''
+    roundN = 5 # Round T to roundN digits
+    T1 = round(T * T_mask * T_mask * m, roundN)
+    T2 = round(T * T_mask * (1 - m), roundN)
+    T3 = round(T * (1 - m), roundN)
+    T4 = round(T * T_mask * m , roundN)
+
+    Q1 = T1 * (1 - m) + T2 * m
+    Q2 = T3 * (1 - m) + T4 * m
+
+    mu11 = T2 * m / Q1
+    mu12 = T1 * (1 - m) / Q1
+    mu22 = T3 * (1 - m) / Q2
+    mu21 = T4 * m / Q2
+
+    trans_dict = {'Q1': Q1,
+                  'Q2': Q2}
+    
+    mu_dict = {'mu11': mu11,
+               'mu12': mu12,
+               'mu22': mu22,
+               'mu21': mu21, }
+
+    print("Q1: %.5f" %Q1)
+    print("Q2: %.5f" %Q2)
+
+    print("mu11: %.5f" %mu11)
+    print("mu12: %.5f" %mu12)
+    print("mu22: %.5f" %mu22)
+    print("mu21: %.5f" %mu21)
+    return trans_dict, mu_dict
+
+
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath):
+    '''
+    Added by Yurun
+    '''
     figure_path = ExpPath + '/' + 'Figures'
     if not os.path.exists(figure_path):
-#         print("make path ", figure_path)
         os.mkdir(figure_path)
     
     ### Probability of Emergence ###    
@@ -154,16 +209,28 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
 # num_cores = min(paras.numCores,multiprocessing.cpu_count())
 # thrVal = paras.thrVal
 
-
+########### Edited by Yurun ###########
+paras = parse_args(sys.argv[1:])
 mean_degree_list = np.linspace(0, 10, 50)
-t1 = 0.02112
-t2 = 0.1568
 
-m1 = 0.9090909090909091
-m2 = 0.8163265306122449
+nodeN = paras.n
+ExpN = paras.e
+threshold = paras.th
+num_cores = min(paras.numCores,multiprocessing.cpu_count())
+mask_prob = paras.m
+T_mask = paras.tm
+T = paras.T
 
-num_nodes = 100000
-numExp = 10000
+trans_dict = generate_new_transmissibilities_mutation(T_mask, T, mask_prob)
+t1 = trans_dict[0]['Q1'] # Q1
+t2 = trans_dict[0]['Q2'] # Q2
+
+
+m1 = trans_dict[1]['mu11'] # mu11
+m2 = trans_dict[1]['mu22'] ## mu22
+
+num_nodes = nodeN
+numExp = ExpN
 
 start_strain = 1
 num_cores = min(2,multiprocessing.cpu_count())
@@ -174,10 +241,10 @@ print("Exp number:", numExp)
 
 T_list = [t1, t2]
 mutation_probability = [m1, m2]
-ff = open("log1"+'Det','w+')
-f = open("log1", 'w+')
+# ff = open("log1"+'Det','w+')
+# f = open("log1", 'w+')
 
-########### Added by Yurun ###########
+
 Prob_Emergence = list()
 AvgValidSize = list()
 AvgSize = list()
@@ -187,13 +254,14 @@ infSt2 = list()
 
 now = datetime.now() # current date and time
 timeExp = now.strftime("%m%d%H:%M")
-ExpPath = 'PaperCode_Results/' + timeExp + '_n' + str(num_nodes) + '_e' + str(numExp)
+ExpPath = '../MutationResults/' + timeExp + '_n' + str(num_nodes) + '_e' + str(numExp)
 
 if not os.path.exists(ExpPath):
-#     print("make path ", ExpPath)
     os.makedirs(ExpPath)
+    
+print("Experiment results stored in: ", ExpPath)
 
-#### Paper Code ####
+
 for mean_degree in mean_degree_list:
     a = time.time()
     ttlEpidemicsSize = 0
@@ -203,18 +271,13 @@ for mean_degree in mean_degree_list:
     fractionDic = Manager().dict()
     infectedPerStDic = Manager().dict()
     ttlFrac = 0
-#     with parallel_backend('multiprocessing'):
+
     Parallel(n_jobs = num_cores)(delayed(runExp)(i, mean_degree,num_nodes, T_list, mutation_probability) 
                                  for i in range(numExp))
-#     for exp in range(numExp):
-#         runExp(exp, mean_degree,num_nodes, T_list, mutation_probability) 
 
     for ii in range(numExp):
-        resultsFrac = 'meanDeg: {0} Size: {1} infSt1: {2} infSt2: {3}\n'.format(mean_degree, fractionDic[ii], infectedPerStDic[ii][0],infectedPerStDic[ii][1] )
 
         if fractionDic[ii] >= thrVal:
-            ff.write(resultsFrac)
-            ff.flush()
             numEpidemics += 1
             ttlEpidemicsSize += fractionDic[ii]
             Epidemics.append(fractionDic[ii])
@@ -225,14 +288,6 @@ for mean_degree in mean_degree_list:
 
     if len(Epidemics) == 0:
         Epidemics.append(0)
-
-
-    results = 'numExp: {0} Threshold: {1} n: {2} meanDeg: {3} Prob: {4} AvgValidSize: {5} StdValidSize: {6} infSt1: {7} infSt2: {8} AvgSize: {9} T: {10} Mu: {11} Time: {12} \n'.format(
-               numExp, thrVal , num_nodes, mean_degree, numEpidemics*1.0/(numExp), div(ttlEpidemicsSize*1.0,numEpidemics), np.std(Epidemics) , div(EpidemicsPerSt[0],numEpidemics),div(EpidemicsPerSt[1],numEpidemics), ttlFrac*1.0/numExp,' '.join(map(str, T_list)), ' '.join(map(str, mutation_probability)), time.time()-a )
-    
-#     print(results)
-    f.write(results)
-    f.flush()
     
     ######### Record the results for this Mean Degree ##########    
     Prob_Emergence.append(numEpidemics*1.0/(numExp))

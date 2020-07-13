@@ -25,7 +25,6 @@ def create_network(mean_degree, num_nodes):
     degree_sequence = np.random.poisson(mean_degree, num_nodes)
     while (np.sum(degree_sequence) % 2 !=0):
         degree_sequence = np.random.poisson(mean_degree, num_nodes)
-
     return ig.Graph.Degree_Sequence(list(degree_sequence))
 
 def div(x, y):
@@ -41,21 +40,25 @@ def runExp(i, mean_degree, num_nodes, T_list, mask_prob):
 #     infectedPerStDic[i] = [div(size1,num_nodes), div(size2,num_nodes)]
 
 def infected_rule(edge_trans_dict, susceptible_nodes):
-#     print("In infect", susceptible_nodes)
+    """
+    Edited by Yurun
+    """
     new_nodes_list = set()
     if (len(edge_trans_dict.keys()) != 0):
         for node in edge_trans_dict.keys():
             trial_list = edge_trans_dict[node]
-            random.shuffle(trial_list) # Shuffle
+            random.shuffle(trial_list) # Shuffle or not doesn't matter in Mask model
             for trans in trial_list:
                 if random.random() < trans:
-#                     print("Be infect", susceptible_nodes)
                     susceptible_nodes.remove(node)
                     new_nodes_list.add(node)
                     break
     return new_nodes_list
 
 def evolution(g, t_list, mask_prob):
+    """
+    Edited by Yurun
+    """
     g.simplify()
     
     node_set = set(g.vs.indices)
@@ -66,15 +69,12 @@ def evolution(g, t_list, mask_prob):
 
     susceptible_nodes = node_set
     strain_set = set([int(np.random.random_integers(0, num_nodes - 1))])
-#     print(strain_set)
     susceptible_nodes = susceptible_nodes.difference(strain_set)
-#     print("before infect", susceptible_nodes)
     new_nodes_list = strain_set
     
     
     while(len(new_nodes_list)):
         edge_trans_dict = collections.defaultdict(list)
-        
         
         for node in strain_set:
             strain_neighbors_list = []
@@ -93,9 +93,6 @@ def evolution(g, t_list, mask_prob):
                     T_edge = t_list[3]
                 
                 edge_trans_dict[neighbor_node].append(T_edge) 
-                    
-#             strain_neighbors_list += neighbors 
-
             
         new_nodes_list = infected_rule(edge_trans_dict, susceptible_nodes)
 
@@ -104,21 +101,46 @@ def evolution(g, t_list, mask_prob):
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description = 'Parameters')
-    parser.add_argument('-m', type = float, nargs = '+', default = np.arange(1, 10.1, 0.1), help='np.linspace(0.001, 7, 50) (default); list of mean degree: you can type 1 3 5')
-    parser.add_argument('-n', type = int, default = 200000, help='10,000 (default); the number of nodes')
-    parser.add_argument('-e', type = int, default = 50, help='100 (default); the number of experiments')
-    parser.add_argument('-t1', type = float, default = 0.2, help='0.5 (default); the transmissibility of strain-1')
-    parser.add_argument('-t2', type = float, default = 0.5, help='0.5 (default); the transmissibility of strain-2')
-    parser.add_argument('-m1', type = float, default = 0.9, help='0.5 (default); the mutation probability from 1 to 1')
-    parser.add_argument('-m2', type = float, default = 1.0, help='0.5 (default); the mutation probability from 2 to 2')
-    parser.add_argument('-thrVal', type = float, default = 0.005, help='0.001 (default); the treshold to consider a component giant')
+    parser.add_argument('-n', type = int, default = 200000, help='200,000 (default); the number of nodes')
+    parser.add_argument('-e', type = int, default = 50, help='50 (default); the number of experiments')
+    parser.add_argument('-m', type = float, default = 0.6, help='0.6 (default); the prob of wearing a mask')
+    parser.add_argument('-tm', type = float, default = 0.5, help='0.5 (default); T_mask')
+    parser.add_argument('-T', type = float, default = 0.6, help='0.6 (default); transmissibility of the orinigal virus')
+    parser.add_argument('-th', type = float, default = 0.001, help='0.001 (default); the treshold to consider a component giant')
     parser.add_argument('-numCores', type = int, default = 12, help='number of Cores')
-    parser.add_argument('-logName', default = 'logfile', help='The name of the log file')
-    parser.add_argument('-i', type = int, default = 1, help='1 (default); starting from type-i node')
+#     parser.add_argument('-thrVal', type = float, default = 0.005, help='0.001 (default); the treshold to consider a component giant')
+    
+#     parser.add_argument('-logName', default = 'logfile', help='The name of the log file')
+#     parser.add_argument('-i', type = int, default = 1, help='1 (default); starting from type-i node')
     return parser.parse_args(args)
 
-####### Added by Yurun #######
+
+def generate_new_transmissibilities_mask(T_mask, T, m):
+    """
+    Added by Yurun
+    """
+    roundN = 5 # Round T to roundN digits
+    T1 = round(T * T_mask * T_mask * m, roundN)
+    T2 = round(T * T_mask * (1 - m), roundN)
+    T3 = round(T * (1 - m), roundN)
+    T4 = round(T * T_mask * m , roundN)
+
+    trans_dict = {'T1': T1,
+                  'T2': T2,
+                  'T3': T3,
+                  'T4': T4}
+
+    print("T1: %.5f" %T1)
+    print("T2: %.5f" %T2)
+    print("T3: %.5f" %T3)
+    print("T4: %.5f" %T4)
+    
+    return trans_dict    
+
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath):
+    """
+    Added by Yurun
+    """
     figure_path = ExpPath + '/' + 'Figures'
     if not os.path.exists(figure_path):
 #         print("make path ", figure_path)
@@ -129,7 +151,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, Prob_Emergence, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Prob of Emergence")
-    title = "Probability of Emergence for Paper Model"
+    title = "Probability of Emergence for Mask Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
@@ -138,7 +160,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, AvgValidSize, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Epidemic Size")
-    title = "Epidemic Size for Paper Model"
+    title = "Epidemic Size for Mask Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
@@ -147,12 +169,14 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, AvgSize, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Infected Frac")
-    title = "Infected Frac for Paper Model"
+    title = "Infected Frac for Mask Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+
     
-# paras = parse_args(sys.argv[1:])
-# mean_degree_list = paras.m
+
+
+
 # t1 = paras.t1
 # t2 = paras.t2
 # m1 = paras.m1
@@ -163,30 +187,44 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
 # num_cores = min(paras.numCores,multiprocessing.cpu_count())
 # thrVal = paras.thrVal
 
-
+########### Paras & Path preparation ###########
+paras = parse_args(sys.argv[1:])
 mean_degree_list = np.linspace(0, 10, 50)
-t1 = 0.0048
-t2 = 0.032
-t3 = 0.32
-t4 = 0.048
 
-mask_prob = 0.6
 
-num_nodes = 100000
-numExp = 10000
+num_nodes = paras.n
+numExp = paras.e
+thrVal = paras.th
+num_cores = min(paras.numCores,multiprocessing.cpu_count())
+mask_prob = paras.m
+T_mask = paras.tm
+T = paras.T
+# start_strain = 1
 
-start_strain = 1
-num_cores = min(2,multiprocessing.cpu_count())
-thrVal = 0.005
 
 print("Node number:", num_nodes)
 print("Exp number:", numExp)
 
-T_list = [t1, t2, t3, t4]
-ff = open("log1"+'Det','w+')
-f = open("log1", 'w+')
+trans_dict = generate_new_transmissibilities_mask(T_mask, T, mask_prob)
+t1 = trans_dict['T1']
+t2 = trans_dict['T2']
+t3 = trans_dict['T3']
+t4 = trans_dict['T4']
 
-########### Added by Yurun ###########
+T_list = [t1, t2, t3, t4]
+
+
+
+now = datetime.now() # current date and time
+timeExp = now.strftime("%m%d%H:%M")
+ExpPath = '../MaskResults/' + timeExp + '_n' + str(num_nodes) + '_e' + str(numExp)
+
+if not os.path.exists(ExpPath):
+    os.makedirs(ExpPath)
+
+print("Experiment results stored in: ", ExpPath)
+
+############ Start Exp ############
 Prob_Emergence = list()
 AvgValidSize = list()
 AvgSize = list()
@@ -194,14 +232,7 @@ StdValidSize = list()
 infSt1 = list()
 infSt2 = list()
 
-now = datetime.now() # current date and time
-timeExp = now.strftime("%m%d%H:%M")
-ExpPath = 'Paper_Mask_Results/' + timeExp + '_n' + str(num_nodes) + '_e' + str(numExp)
 
-if not os.path.exists(ExpPath):
-    os.makedirs(ExpPath)
-
-#### Paper Code ####
 for mean_degree in mean_degree_list:
     a = time.time()
     ttlEpidemicsSize = 0
@@ -213,8 +244,7 @@ for mean_degree in mean_degree_list:
     ttlFrac = 0
     
     Parallel(n_jobs = num_cores)(delayed(runExp)(i, mean_degree,num_nodes, T_list, mask_prob) for i in range(numExp))
-#     for exp in range(numExp):
-#         runExp(exp, mean_degree,num_nodes, T_list, mask_prob) 
+
 
     for ii in range(numExp):
         if fractionDic[ii] >= thrVal:
@@ -270,77 +300,3 @@ np.save(res_paths + '/StdValidSize.npy', np.array(StdValidSize))
 np.save(res_paths + '/infSt1.npy', np.array(infSt1)) 
 np.save(res_paths + '/infSt2.npy', np.array(infSt2)) 
     
-
-
-# In[7]:
-
-
-get_ipython().run_line_magic('debug', '')
-
-
-# In[4]:
-
-
-import numpy as np
-set([int(np.random.random_integers(0, 10 - 1))])
-
-
-# In[13]:
-
-
-a = set({1})
-
-
-# In[14]:
-
-
-a
-
-
-# In[15]:
-
-
-a.remove(1)
-
-
-# In[16]:
-
-
-a
-
-
-# In[17]:
-
-
-a = {0, 1, 2, 3, 4}
-
-
-# In[18]:
-
-
-type(a)
-
-
-# In[19]:
-
-
-a.remove(3)
-
-
-# In[20]:
-
-
-a
-
-
-# In[21]:
-
-
-a.remove(7)
-
-
-# In[ ]:
-
-
-
-
