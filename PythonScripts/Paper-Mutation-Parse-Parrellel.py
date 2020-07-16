@@ -175,7 +175,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, Prob_Emergence, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Prob of Emergence")
-    title = "Probability of Emergence for Paper Model"
+    title = "Probability of Emergence for Mutation Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
@@ -184,7 +184,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, AvgValidSize, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Epidemic Size")
-    title = "Epidemic Size for Paper Model"
+    title = "Epidemic Size for Mutation Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
@@ -193,7 +193,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
     plt.plot(mean_degree_list, AvgSize, 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Infected Frac")
-    title = "Infected Frac for Paper Model"
+    title = "Infected Frac for Mutation Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
