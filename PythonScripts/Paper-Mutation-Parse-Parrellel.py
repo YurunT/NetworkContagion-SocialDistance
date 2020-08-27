@@ -10,6 +10,7 @@ import numpy as np
 import igraph as ig
 from datetime import datetime
 from joblib import Parallel, delayed
+from collections import defaultdict 
 import multiprocessing, time
 from multiprocessing import Manager
 
@@ -162,38 +163,103 @@ def generate_new_transmissibilities_mutation(T_mask, T, m):
     return trans_dict, mu_dict
 
 
-def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath):
-    '''
+def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, infSt1, infSt2, m):
+    """
     Added by Yurun
-    '''
+    """
     figure_path = ExpPath + '/' + 'Figures'
     if not os.path.exists(figure_path):
         os.mkdir(figure_path)
     
-    ### Probability of Emergence ###    
+    ### Probability of Emergence for 2 strains ###    
     plt.figure()
-    plt.plot(mean_degree_list, Prob_Emergence, 'go')
+    
+    plt.plot(mean_degree_list, np.array(Prob_Emergence[1]) * m + np.array(Prob_Emergence[2]) * (1 - m), 'yo')
+    plt.plot(mean_degree_list, Prob_Emergence[1], 'bo')
+    plt.plot(mean_degree_list, Prob_Emergence[2], 'ro')
+    
+    plt.legend(["Avg", "Strain-1", "Strain-2"])
     plt.xlabel("Mean Degree")
     plt.ylabel("Prob of Emergence")
-    title = "Probability of Emergence for Mutation Model"
+    title = "Simulated Probability of Emergence for Mutation Model(separate)"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
-    ### Epidemic Size ###
+    ### Probability of Emergence ###    
     plt.figure()
-    plt.plot(mean_degree_list, AvgValidSize, 'go')
+    plt.plot(mean_degree_list, np.array(Prob_Emergence[1]) * m + np.array(Prob_Emergence[2]) * (1 - m), 'go')
     plt.xlabel("Mean Degree")
-    plt.ylabel("Epidemic Size")
-    title = "Epidemic Size for Mutation Model"
+    plt.ylabel("Prob of Emergence")
+    title = "Simulated Probability of Emergence for Mutation Model"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+    
+    
+    '''
+    Start from strain-1
+    '''
+    ### Epidemic Size for 2 strains ###
+    plt.figure()
+    plt.plot(mean_degree_list, AvgValidSize[1], 'yo')
+    plt.plot(mean_degree_list, infSt1[1], 'bo')
+    plt.plot(mean_degree_list, infSt2[1], 'ro')
+    plt.xlabel("Mean Degree")
+    plt.ylabel("Epidemic Size")
+    plt.legend(["Avg", "Strain-1", "Strain-2"])
+    title = "Simulated Epidemic Size for Mutation Model(separate)\n Seed strain-1"
+    plt.title(title)
+    plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+    
+    ### Epidemic Size  ###
+    plt.figure()
+    plt.plot(mean_degree_list, AvgValidSize[1], 'go')
+    plt.xlabel("Mean Degree")
+    plt.ylabel("Epidemic Size")
+    title = "Simulated Epidemic Size for Mutation Model\n Seed strain-1"
+    plt.title(title)
+    plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+   
     
     ### Infected Frac ###
     plt.figure()
-    plt.plot(mean_degree_list, AvgSize, 'go')
+    plt.plot(mean_degree_list, AvgSize[1], 'go')
     plt.xlabel("Mean Degree")
     plt.ylabel("Infected Frac")
-    title = "Infected Frac for Mutation Model"
+    title = "Simulated Infected Frac for Mutation Model\n Seed strain-1"
+    plt.title(title)
+    plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+    
+    '''
+    Start from strain-2
+    '''
+    ### Epidemic Size for 2 strains ###
+    plt.figure()
+    plt.plot(mean_degree_list, AvgValidSize[2], 'yo')
+    plt.plot(mean_degree_list, infSt1[2], 'bo')
+    plt.plot(mean_degree_list, infSt2[2], 'ro')
+    plt.xlabel("Mean Degree")
+    plt.ylabel("Epidemic Size")
+    plt.legend(["Avg", "Strain-1", "Strain-2"])
+    title = "Simulated Epidemic Size for Mutation Model(separate)\n Seed strain-2"
+    plt.title(title)
+    plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+    
+    ### Epidemic Size  ###
+    plt.figure()
+    plt.plot(mean_degree_list, infSt1[2], 'go')
+    plt.xlabel("Mean Degree")
+    plt.ylabel("Epidemic Size")
+    title = "Simulated Epidemic Size for Mutation Model\n Seed strain-2"
+    plt.title(title)
+    plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
+   
+    
+    ### Infected Frac ###
+    plt.figure()
+    plt.plot(mean_degree_list, AvgSize[2], 'go')
+    plt.xlabel("Mean Degree")
+    plt.ylabel("Infected Frac")
+    title = "Simulated Infected Frac for Mutation Model\n Seed strain-2"
     plt.title(title)
     plt.savefig(figure_path + '/' + title.replace(" ", "_") + '.png')
     
@@ -209,7 +275,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
 # num_cores = min(paras.numCores,multiprocessing.cpu_count())
 # thrVal = paras.thrVal
 
-########### Edited by Yurun ###########
+########### Paras & Path preparation ###########
 paras = parse_args(sys.argv[1:])
 mean_degree_list = np.linspace(0, 10, 50)
 
@@ -232,7 +298,7 @@ m2 = trans_dict[1]['mu22'] ## mu22
 num_nodes = nodeN
 numExp = ExpN
 
-start_strain = 1
+
 num_cores = min(2,multiprocessing.cpu_count())
 thrVal = 0.005
 
@@ -245,15 +311,55 @@ mutation_probability = [m1, m2]
 # f = open("log1", 'w+')
 
 
-Prob_Emergence = list()
-AvgValidSize = list()
-AvgSize = list()
-StdValidSize = list()
-infSt1 = list()
-infSt2 = list()
+Prob_Emergence = defaultdict(list)
+AvgValidSize = defaultdict(list)
+AvgSize = defaultdict(list)
+StdValidSize = defaultdict(list)
+infSt1 = defaultdict(list)
+infSt2 = defaultdict(list)
 
 now = datetime.now() # current date and time
 timeExp = now.strftime("%m%d%H:%M")
+print("Exp start at:" + timeExp)
+
+
+for start_strain in [1, 2]:
+    for mean_degree in mean_degree_list:
+        a = time.time()
+        ttlEpidemicsSize = 0
+        numEpidemics = 0
+        Epidemics = []
+        EpidemicsPerSt = [0,0,0]
+        fractionDic = Manager().dict()
+        infectedPerStDic = Manager().dict()
+        ttlFrac = 0
+
+        Parallel(n_jobs = num_cores)(delayed(runExp)(i, mean_degree,num_nodes, T_list, mutation_probability) 
+                                     for i in range(numExp))
+
+        for ii in range(numExp):
+
+            if fractionDic[ii] >= thrVal:
+                numEpidemics += 1
+                ttlEpidemicsSize += fractionDic[ii]
+                Epidemics.append(fractionDic[ii])
+                EpidemicsPerSt[0] += infectedPerStDic[ii][0]
+                EpidemicsPerSt[1] += infectedPerStDic[ii][1]
+
+            ttlFrac += fractionDic[ii]
+
+        if len(Epidemics) == 0:
+            Epidemics.append(0)
+
+        ######### Record the results for this Mean Degree ##########    
+        Prob_Emergence[start_strain].append(numEpidemics*1.0/(numExp))
+        AvgValidSize[start_strain].append(div(ttlEpidemicsSize*1.0, numEpidemics))
+        AvgSize[start_strain].append(ttlFrac*1.0/numExp)
+        StdValidSize[start_strain].append(np.std(Epidemics))
+        infSt1[start_strain].append(div(EpidemicsPerSt[0],numEpidemics))
+        infSt2[start_strain].append(div(EpidemicsPerSt[1],numEpidemics))
+
+######### Save the results for all Mean Degrees ########## 
 ExpPath = '../MutationResults/' + timeExp + '_n' + str(num_nodes) + '_e' + str(numExp)
 
 if not os.path.exists(ExpPath):
@@ -261,52 +367,23 @@ if not os.path.exists(ExpPath):
     
 print("Experiment results stored in: ", ExpPath)
 
-
-for mean_degree in mean_degree_list:
-    a = time.time()
-    ttlEpidemicsSize = 0
-    numEpidemics = 0
-    Epidemics = []
-    EpidemicsPerSt = [0,0,0]
-    fractionDic = Manager().dict()
-    infectedPerStDic = Manager().dict()
-    ttlFrac = 0
-
-    Parallel(n_jobs = num_cores)(delayed(runExp)(i, mean_degree,num_nodes, T_list, mutation_probability) 
-                                 for i in range(numExp))
-
-    for ii in range(numExp):
-
-        if fractionDic[ii] >= thrVal:
-            numEpidemics += 1
-            ttlEpidemicsSize += fractionDic[ii]
-            Epidemics.append(fractionDic[ii])
-            EpidemicsPerSt[0] += infectedPerStDic[ii][0]
-            EpidemicsPerSt[1] += infectedPerStDic[ii][1]
-
-        ttlFrac += fractionDic[ii]
-
-    if len(Epidemics) == 0:
-        Epidemics.append(0)
-    
-    ######### Record the results for this Mean Degree ##########    
-    Prob_Emergence.append(numEpidemics*1.0/(numExp))
-    AvgValidSize.append(div(ttlEpidemicsSize*1.0, numEpidemics))
-    AvgSize.append(ttlFrac*1.0/numExp)
-    StdValidSize.append(np.std(Epidemics))
-    infSt1.append(div(EpidemicsPerSt[0],numEpidemics))
-    infSt2.append(div(EpidemicsPerSt[1],numEpidemics))
-
-######### Save the results for all Mean Degrees ########## 
-draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath)
+draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, infSt1, infSt2, mask_prob)
 
 setting_path = ExpPath + '/' + 'Settings'
 if not os.path.exists(setting_path):
     os.mkdir(setting_path)
+ 
+res_path = ExpPath + '/' + 'Results'
+if not os.path.exists(res_path):
+    os.mkdir(res_path) 
+
+res_paths1 = res_path+ '/start-s1'
+if not os.path.exists(res_paths1):
+    os.mkdir(res_paths1)
     
-res_paths = ExpPath + '/' + 'Results'
-if not os.path.exists(res_paths):
-    os.mkdir(res_paths)
+res_paths2 = res_path+ '/start-s2'
+if not os.path.exists(res_paths2):
+    os.mkdir(res_paths2)
 
 ### Experiment Parameters ###
 paras = dict()
@@ -325,11 +402,21 @@ np.save(setting_path + '/trans_dict_mu.npy', np.array(T_list))
 np.save(setting_path + '/mu_dict.npy', np.array(mutation_probability))
 
 
-### Results ###
-np.save(res_paths + '/Prob_Emergence.npy', np.array(Prob_Emergence)) 
-np.save(res_paths + '/AvgValidSize.npy', np.array(AvgValidSize)) 
-np.save(res_paths + '/StdValidSize.npy', np.array(StdValidSize)) 
-np.save(res_paths + '/infSt1.npy', np.array(infSt1)) 
-np.save(res_paths + '/infSt2.npy', np.array(infSt2)) 
+### Results start from strain-1 ###
+np.save(res_paths1 + '/Prob_Emergence.npy', np.array(Prob_Emergence[1])) 
+np.save(res_paths1 + '/AvgValidSize.npy', np.array(AvgValidSize[1])) 
+np.save(res_paths1 + '/StdValidSize.npy', np.array(StdValidSize[1])) 
+np.save(res_paths1 + '/infSt1.npy', np.array(infSt1[1])) 
+np.save(res_paths1 + '/infSt2.npy', np.array(infSt2[1])) 
+
+### Results start from strain-2 ###
+np.save(res_paths2 + '/Prob_Emergence.npy', np.array(Prob_Emergence[2])) 
+np.save(res_paths2 + '/AvgValidSize.npy', np.array(AvgValidSize[2])) 
+np.save(res_paths2 + '/StdValidSize.npy', np.array(StdValidSize[2])) 
+np.save(res_paths2 + '/infSt1.npy', np.array(infSt1[2])) 
+np.save(res_paths2 + '/infSt2.npy', np.array(infSt2[2])) 
     
 
+now = datetime.now() # current date and time
+timeExp = now.strftime("%m%d%H:%M")
+print("Done! at:" + timeExp)
