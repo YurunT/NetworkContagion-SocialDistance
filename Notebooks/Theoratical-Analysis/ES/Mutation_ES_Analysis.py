@@ -357,12 +357,12 @@ with open(setting_path + "/paras.json", "w") as fp:
     json.dump(paras,fp) 
 
 
-with open(res_path + "/infection_size_mu.json", "w") as fp:
+with open(res_path + "/infection_size.json", "w") as fp:
     json.dump(infection_size_mu.copy(),fp) 
     
-with open(res_path + "/infection_size0_mu.json", "w") as fp:
+with open(res_path + "/infection_size0.json", "w") as fp:
     json.dump(infection_size0_mu.copy(),fp) 
-with open(res_path + "/infection_size1_mu.json", "w") as fp:
+with open(res_path + "/infection_size1.json", "w") as fp:
     json.dump(infection_size1_mu.copy(),fp) 
     
 print("All done!")
