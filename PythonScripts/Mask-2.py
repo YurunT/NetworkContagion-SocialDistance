@@ -267,6 +267,7 @@ def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPat
 ########### Paras & Path preparation ###########
 paras = parse_args(sys.argv[1:])
 mean_degree_list = np.linspace(0, 10, 50)
+# mean_degree_list = np.linspace(0, 20, 100)
 
 
 num_nodes = paras.n
