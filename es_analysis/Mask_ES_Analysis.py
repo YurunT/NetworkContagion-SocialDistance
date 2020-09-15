@@ -116,7 +116,7 @@ def P_A_given_B(i, k, T_list, A_0, A_1, m):
                 ((1 - m) ** (k - 1 - n))
     return p_ab
 
-def P_A(i, mean_degree, nodeN, T_list, m, A_0, A_1):
+def P_A(i, mean_degree, nodeN, T_list, m, A_0, A_1, k_max):
     P_k_dict, k_max = generate_degree_list(mean_degree, nodeN)
     pa_L = 0
     for k in range(1, k_max):
@@ -127,23 +127,23 @@ def P_A(i, mean_degree, nodeN, T_list, m, A_0, A_1):
         p_b = k * p_k / mean_degree
         p_ab = P_A_given_B(i, k, T_list, A_0, A_1, m)
         pa_L += p_ab * p_b
-    return rho + (1 - rho)*pa_L
+    return pa_L
 
-def p_A_vec(mean_degree, nodeN, T_list, m, A_0, A_1):
-    A0 = P_A(0, mean_degree, nodeN, T_list, m, A_0, A_1)
-    A1 = P_A(1, mean_degree, nodeN, T_list, m, A_0, A_1)
+def p_A_vec(mean_degree, nodeN, T_list, m, A_0, A_1, k_max):
+    A0 = P_A(0, mean_degree, nodeN, T_list, m, A_0, A_1, k_max)
+    A1 = P_A(1, mean_degree, nodeN, T_list, m, A_0, A_1, k_max)
     return [A0, A1]
 
 def func_fix(A, mean_degree, nodeN, T_list, m):
     return np.array(p_A_vec(mean_degree, nodeN, T_list, m, A[0], A[1]))
 
-def func_root(A, mean_degree, nodeN, T_list, m):
-    return np.array(p_A_vec(mean_degree, nodeN, T_list, m, A[0], A[1])) - np.array(A)
+def func_root(A, mean_degree, nodeN, T_list, m, k_max):
+    return np.array(p_A_vec(mean_degree, nodeN, T_list, m, A[0], A[1], k_max)) - np.array(A)
 
-def get_EpidemicSize(mean_degree, nodeN, T_list, m):
+def get_EpidemicSize(mean_degree, nodeN, T_list, m, k_max, infection_size, infection_size0, infection_size1):
     init_A = (0.9, 0.9)
 
-    A_0_1_root = optimize.fsolve(func_root, init_A, args=(mean_degree, nodeN, T_list, m))
+    A_0_1_root = optimize.fsolve(func_root, init_A, args=(mean_degree, nodeN, T_list, m, k_max))
     pa_L_0 = 0
     pa_L_1 = 0
     pa_L = 0
@@ -212,90 +212,91 @@ def parse_args(args):
     parser.add_argument('-ns', type = int, default = 50, help='Num of sample within [0, max_degree]')
     parser.add_argument('-change', type = int, default = 0, help='Change m(0), T(1), tm(2)')
     return parser.parse_args(args)
-    
-    
-###### Paras setting ######
-paras = parse_args(sys.argv[1:])
-numNodes = paras.n
-rho = 1.0/numNodes
 
-thrVal = paras.th
-num_cores = min(paras.nc,multiprocessing.cpu_count())
-mask_prob = paras.m
-T_mask1 = paras.tm1
-T_mask2 = paras.tm2
-T = paras.T
-degree_max = paras.md
-num_samples = paras.ns
-change = paras.change
+def main():
+    ###### Paras setting ######
+    paras = parse_args(sys.argv[1:])
+    numNodes = paras.n
+    rho = 1.0/numNodes
 
-paras = dict()
-paras['n'] = numNodes
-paras['th'] = thrVal
-paras['m'] = mask_prob
-paras['T'] = T
-paras['tm1'] = T_mask1
-paras['tm2'] = T_mask2
-paras['md'] = degree_max
-paras['ns'] = num_samples
+    thrVal = paras.th
+    num_cores = min(paras.nc,multiprocessing.cpu_count())
+    mask_prob = paras.m
+    T_mask1 = paras.tm1
+    T_mask2 = paras.tm2
+    T = paras.T
+    degree_max = paras.md
+    num_samples = paras.ns
+    change = paras.change
 
-print(paras)
+    paras = dict()
+    paras['n'] = numNodes
+    paras['th'] = thrVal
+    paras['m'] = mask_prob
+    paras['T'] = T
+    paras['tm1'] = T_mask1
+    paras['tm2'] = T_mask2
+    paras['md'] = degree_max
+    paras['ns'] = num_samples
 
-mean_degree_list = np.linspace(0, degree_max, num_samples)
-max_degree = 2 * degree_max # inf
-k_max = max_degree
-T_list = list(generate_new_transmissibilities_mask(T_mask1, T_mask2, T, mask_prob).values())
+    print(paras)
 
-###### Run on multiple cores ###### 
-infection_size = Manager().dict()
-infection_size0 = Manager().dict()
-infection_size1 = Manager().dict()
+    mean_degree_list = np.linspace(0, degree_max, num_samples)
+    max_degree = 2 * degree_max # inf
+    k_max = max_degree
+    T_list = list(generate_new_transmissibilities_mask(T_mask1, T_mask2, T, mask_prob).values())
 
-Parallel(n_jobs = num_cores)(delayed(get_EpidemicSize)(mean_degree, numNodes, T_list, mask_prob) for mean_degree in mean_degree_list)
+    ###### Run on multiple cores ###### 
+    infection_size = Manager().dict()
+    infection_size0 = Manager().dict()
+    infection_size1 = Manager().dict()
 
-
-######### Save the results for all Mean Degrees ########## 
-print("Parrell finished! Start wrting json...")
-# print(infection_size)
-# print(infection_size0)
-# print(infection_size1)
-
-if change == 0:
-    change_folder = 'change_m'
-elif change == 1:
-    change_folder = 'change_T'
-else:
-    change_folder = 'change_tm'
-    
-now_finish = datetime.now() # current date and time
-timeExp = now_finish.strftime("%m%d%H:%M")
-
-ExpPath = 'Mask_ES_Analysis_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/' + timeExp
+    Parallel(n_jobs = num_cores)(delayed(get_EpidemicSize)(mean_degree, numNodes, T_list, mask_prob, k_max, infection_size, infection_size0, infection_size1) for mean_degree in mean_degree_list)
 
 
-if not os.path.exists(ExpPath):
-    os.makedirs(ExpPath)
-print("Mask Analysis results stored in: ", ExpPath)
+    ######### Save the results for all Mean Degrees ########## 
+    print("Parrell finished! Start wrting json...")
+    # print(infection_size)
+    # print(infection_size0)
+    # print(infection_size1)
+
+    if change == 0:
+        change_folder = 'change_m'
+    elif change == 1:
+        change_folder = 'change_T'
+    else:
+        change_folder = 'change_tm'
+
+    now_finish = datetime.now() # current date and time
+    timeExp = now_finish.strftime("%m%d%H:%M")
+
+    ExpPath = 'Mask_ES_Analysis_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/' + timeExp
 
 
-setting_path = ExpPath + '/' + 'Settings'
-if not os.path.exists(setting_path):
-    os.mkdir(setting_path)
-
-res_path = ExpPath + '/' + 'Results'
-if not os.path.exists(res_path):
-    os.mkdir(res_path) 
-
-with open(setting_path + "/paras.json", "w") as fp:
-    json.dump(paras,fp) 
+    if not os.path.exists(ExpPath):
+        os.makedirs(ExpPath)
+    print("Mask Analysis results stored in: ", ExpPath)
 
 
-with open(res_path + "/infection_size.json", "w") as fp:
-    json.dump(infection_size.copy(),fp) 
-    
-with open(res_path + "/infection_size0.json", "w") as fp:
-    json.dump(infection_size0.copy(),fp) 
-with open(res_path + "/infection_size1.json", "w") as fp:
-    json.dump(infection_size1.copy(),fp) 
-    
-print("All done!")
+    setting_path = ExpPath + '/' + 'Settings'
+    if not os.path.exists(setting_path):
+        os.mkdir(setting_path)
+
+    res_path = ExpPath + '/' + 'Results'
+    if not os.path.exists(res_path):
+        os.mkdir(res_path) 
+
+    with open(setting_path + "/paras.json", "w") as fp:
+        json.dump(paras,fp) 
+
+
+    with open(res_path + "/infection_size.json", "w") as fp:
+        json.dump(infection_size.copy(),fp) 
+
+    with open(res_path + "/infection_size0.json", "w") as fp:
+        json.dump(infection_size0.copy(),fp) 
+    with open(res_path + "/infection_size1.json", "w") as fp:
+        json.dump(infection_size1.copy(),fp) 
+
+    print("All done!")
+main()

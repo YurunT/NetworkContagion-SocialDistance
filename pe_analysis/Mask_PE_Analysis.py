@@ -70,7 +70,7 @@ def generate_new_transmissibilities_mutation(T_mask1, T_mask2, T, m):
     return Q_dict, mu_dict
 
 
-def PE(i, is_intermediate, E0, E1, T_list, m, mean_degree):
+def PE(i, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree):
     res = 0
     for k in range(0, max_degree):
         prob_r = poisson.pmf(k, mean_degree)
@@ -129,18 +129,18 @@ def PE_BN(i, is_intermediate, n, k, E0, E1, T_list, m):
     return res
 
 
-def PE_vec(mean_degree, is_intermediate,  T_list, m, E0, E1):
-    E0 = PE(0, is_intermediate, E0, E1, T_list, m, mean_degree)
-    E1 = PE(1, is_intermediate, E0, E1, T_list, m, mean_degree)
+def PE_vec(mean_degree, is_intermediate,  T_list, m, E0, E1, max_degree):
+    E0 = PE(0, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree)
+    E1 = PE(1, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree)
     return np.array([E0, E1])
 
-def func_root(E, mean_degree, T_list, m):
-    return PE_vec(mean_degree, True, T_list, m, E[0], E[1]) - np.array(E)
+def func_root(E, mean_degree, T_list, m, max_degree):
+    return PE_vec(mean_degree, True, T_list, m, E[0], E[1], max_degree) - np.array(E)
 
-def get_ProbEmergence(mean_degree, nodeN, T_list, m):
-    E0, E1 = optimize.fsolve(func_root, (0.01, 0.01), args=(mean_degree, T_list, m), xtol=1e-6)    
-    E0, E1 = 1 - PE_vec(mean_degree, False,  T_list, m, E0, E1)
-    pe_list_m[mean_degree] = m * E0 + (1 - m) * E1
+def get_ProbEmergence(mean_degree, nodeN, T_list, m, max_degree, pe_list_m, pe_0_list_m, pe_1_list_m):
+    E0, E1 = optimize.fsolve(func_root, (0.01, 0.01), args=(mean_degree, T_list, m, max_degree), xtol=1e-6)    
+    E0, E1 = 1 - PE_vec(mean_degree, False,  T_list, m, E0, E1, max_degree)
+    pe_list_m[mean_degree]   = m * E0 + (1 - m) * E1
     pe_0_list_m[mean_degree] = E0
     pe_1_list_m[mean_degree] = E1
     print(E0, E1) 
@@ -160,91 +160,94 @@ def parse_args(args):
     parser.add_argument('-change', type = int, default = 0, help='Change m(0), T(1), tm(2)')
     return parser.parse_args(args)
 
-###### Paras setting ######
-paras = parse_args(sys.argv[1:])
-numNodes = paras.n
-rho = 1.0/numNodes
 
-thrVal = paras.th
-num_cores = min(paras.nc,multiprocessing.cpu_count())
-mask_prob = paras.m
-T_mask1 = paras.tm1
-T_mask2 = paras.tm2
-T = paras.T
-degree_max = paras.md
-num_samples = paras.ns
-change = paras.change
+def main():
+    ###### Paras setting ######
+    paras = parse_args(sys.argv[1:])
+    numNodes = paras.n
+    rho = 1.0/numNodes
 
-paras = dict()
-paras['n'] = numNodes
-paras['th'] = thrVal
-paras['tm1'] = T_mask1
-paras['tm2'] = T_mask2
-paras['m'] = mask_prob
-paras['T'] = T
-paras['md'] = degree_max
-paras['ns'] = num_samples
+    thrVal = paras.th
+    num_cores = min(paras.nc,multiprocessing.cpu_count())
+    mask_prob = paras.m
+    T_mask1 = paras.tm1
+    T_mask2 = paras.tm2
+    T = paras.T
+    degree_max = paras.md
+    num_samples = paras.ns
+    change = paras.change
 
-print(paras)
+    paras = dict()
+    paras['n'] = numNodes
+    paras['m'] = mask_prob
+    paras['T'] = T
+    paras['tm1'] = T_mask1
+    paras['tm2'] = T_mask2
+    paras['th'] = thrVal
+    paras['md'] = degree_max
+    paras['ns'] = num_samples
 
-
-mean_degree_list = np.linspace(0, degree_max, num_samples)
-max_degree = 2 * degree_max # inf
-T_list = list(generate_new_transmissibilities_mask(T_mask1, T_mask2, T, mask_prob).values())
+    print(paras)
 
 
-###### Run on multiple cores ###### 
-pe_list_m = Manager().dict()
-pe_0_list_m = Manager().dict()
-pe_1_list_m = Manager().dict()
+    mean_degree_list = np.linspace(0, degree_max, num_samples)
+    max_degree = 2 * degree_max # inf
+    T_list = list(generate_new_transmissibilities_mask(T_mask1, T_mask2, T, mask_prob).values())
 
 
-Parallel(n_jobs = num_cores)(delayed(get_ProbEmergence)(mean_degree, numNodes, T_list, mask_prob) for mean_degree in mean_degree_list)
-
-######### Save the results for all Mean Degrees ########## 
-print("Parrell finished! Start wrting json...")
-# print(pe_list_m)
-# print(pe_0_list_m)
-# print(pe_1_list_m)
-
-if change == 0:
-    change_folder = 'change_m'
-elif change == 1:
-    change_folder = 'change_T'
-else:
-    change_folder = 'change_tm'
-    
-now_finish = datetime.now() # current date and time
-timeExp = now_finish.strftime("%m%d%H:%M")
-
-ExpPath = 'Mask_PE_Analysis_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/' + timeExp
+    ###### Run on multiple cores ###### 
+    pe_list_m = Manager().dict()
+    pe_0_list_m = Manager().dict()
+    pe_1_list_m = Manager().dict()
 
 
-if not os.path.exists(ExpPath):
-    os.makedirs(ExpPath)
-print("Mask Analysis results stored in: ", ExpPath)
+    Parallel(n_jobs = num_cores)(delayed(get_ProbEmergence)(mean_degree, numNodes, T_list, mask_prob, max_degree, pe_list_m, pe_0_list_m, pe_1_list_m, ) for mean_degree in mean_degree_list)
+
+    ######### Save the results for all Mean Degrees ########## 
+    print("Parrell finished! Start wrting json...")
+    # print(pe_list_m)
+    # print(pe_0_list_m)
+    # print(pe_1_list_m)
+
+    if change == 0:
+        change_folder = 'change_m'
+    elif change == 1:
+        change_folder = 'change_T'
+    else:
+        change_folder = 'change_tm'
+
+    now_finish = datetime.now() # current date and time
+    timeExp = now_finish.strftime("%m%d%H:%M")
+
+    ExpPath = 'Mask_PE_Analysis_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/' + timeExp
 
 
-setting_path = ExpPath + '/' + 'Settings'
-if not os.path.exists(setting_path):
-    os.mkdir(setting_path)
-
-res_path = ExpPath + '/' + 'Results'
-if not os.path.exists(res_path):
-    os.mkdir(res_path) 
-    
-
-with open(setting_path + "/paras.json", "w") as fp:
-    json.dump(paras,fp) 
+    if not os.path.exists(ExpPath):
+        os.makedirs(ExpPath)
+    print("Mask Analysis results stored in: ", ExpPath)
 
 
-with open(res_path + "/pe_0_list.json", "w") as fp:
-    json.dump(pe_0_list_m.copy(),fp) 
-    
-with open(res_path + "/pe_1_list.json", "w") as fp:
-    json.dump(pe_1_list_m.copy(),fp) 
-    
-with open(res_path + "/pe_list.json", "w") as fp:
-    json.dump(pe_list_m.copy(),fp) 
-    
-print("All done!")
+    setting_path = ExpPath + '/' + 'Settings'
+    if not os.path.exists(setting_path):
+        os.mkdir(setting_path)
+
+    res_path = ExpPath + '/' + 'Results'
+    if not os.path.exists(res_path):
+        os.mkdir(res_path) 
+
+
+    with open(setting_path + "/paras.json", "w") as fp:
+        json.dump(paras,fp) 
+
+
+    with open(res_path + "/pe_0_list.json", "w") as fp:
+        json.dump(pe_0_list_m.copy(),fp) 
+
+    with open(res_path + "/pe_1_list.json", "w") as fp:
+        json.dump(pe_1_list_m.copy(),fp) 
+
+    with open(res_path + "/pe_list.json", "w") as fp:
+        json.dump(pe_list_m.copy(),fp) 
+
+    print("All done!")
+main()
