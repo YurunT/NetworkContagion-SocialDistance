@@ -62,24 +62,7 @@ def write_analysis_results(paras, infection_size_list, model_name, analysis_item
     with open(res_path + "/nomask.json", "w") as fp:
         json.dump(infection_size1.copy(),fp) 
     
-def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
-    ''' Save the results for simulation.
-        Analysis code are accelarated by Ray.
-    '''
-    num_nodes = paras.n
-    numExp = paras.e
-    thrVal = paras.th
-    mask_prob = paras.m
-    T_mask1 = paras.tm1
-    T_mask2 = paras.tm2
-    T = paras.T
-    degree_max = paras.maxd
-    degree_min = paras.mind
-    num_samples = paras.ns
-    check_point = paras.cp
-    change = paras.change
-    num_cores = paras.nc
-    
+def process_sim_res(results, paras, start_strain):
     Prob_Emergence = defaultdict(list)
     AvgValidSize = defaultdict(list)
     AvgSize = defaultdict(list)
@@ -97,12 +80,10 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_l
     infectedPerStDic = dict()
     ttlFrac = 0
 
-    
-
-    for ii in range(check_point):
+    for ii in range(paras.cp):
         fractionDic[ii] = results[ii][0] ###
         infectedPerStDic[ii] = results[ii][1] ###
-        if fractionDic[ii] >= thrVal:
+        if fractionDic[ii] >= paras.th:
             numEpidemics += 1
             ttlEpidemicsSize += fractionDic[ii]
             Epidemics.append(fractionDic[ii])
@@ -114,24 +95,33 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_l
     if len(Epidemics) == 0:
         Epidemics.append(0)
 
-
     ######### Record the results for this Mean Degree ##########    
-    Prob_Emergence[start_strain].append(numEpidemics*1.0/(check_point))
+    Prob_Emergence[start_strain].append(numEpidemics*1.0/(paras.cp))
     AvgValidSize[start_strain].append(div(ttlEpidemicsSize*1.0, numEpidemics))
-    AvgSize[start_strain].append(ttlFrac*1.0/check_point)
+    AvgSize[start_strain].append(ttlFrac*1.0/paras.cp)
     StdValidSize[start_strain].append(np.std(Epidemics))
     infSt1[start_strain].append(div(EpidemicsPerSt[0],numEpidemics))
     infSt2[start_strain].append(div(EpidemicsPerSt[1],numEpidemics))
+    
+    return Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2
+    
+    
+def write_results(results, model_name, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
+    ''' Save the results for simulation.
+        Analysis code are accelarated by Ray.
+    '''
+    
+    Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2 = process_sim_res(results, paras, start_strain)
 
     ######### Save the results for all Mean Degrees ########## 
-    if change == 0:
+    if paras.change == 0:
         change_folder = 'change_m'
-    elif change == 1:
+    elif paras.change == 1:
         change_folder = 'change_T'
     else:
         change_folder = 'change_tm'
         
-    ExpPath = base_path + 'simulation/' + 'Mask2Results_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/'  + 'n' + str(num_nodes) + '_totalexp' + str(numExp) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(check_point) +'_cp' + str(cp)
+    ExpPath = base_path + 'simulation/' + model_name +'Results_'+ change_folder +'/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/'  + 'n' + str(paras.n) + '_totalexp' + str(paras.e) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
 
     if not os.path.exists(ExpPath):
         os.makedirs(ExpPath)
@@ -176,7 +166,6 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_l
     print("checkpoint %d Done! for exp %s" %(cp, timeExp))
     print("--- %.2s seconds ---" % (time.time() - start_time))
 
-    
 
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, m):
     """

@@ -149,7 +149,7 @@ def main():
                 for i in range(paras.cp):
                     results_ids.append(runExp.remote(i, mean_degree, paras.n, T_list, paras.m, start_strain,))  
                 results = ray.get(results_ids)
-                write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,)
+                write_results(results, 'Mask', start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,)
 
 
     now_finish = datetime.now() # current date and time
