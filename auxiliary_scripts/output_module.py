@@ -6,13 +6,67 @@ import os
 from datetime import datetime
 import time
 
+base_path = '/mnt/hdd-storage/ytian/ns/'
+
 def div(x, y):
     if y == 0:
         return 0
     else:
         return x*1.0/y
     
+def write_analysis_results(paras, infection_size_list, model_name, analysis_item):
+    ''' Save the results for anaysis.
+        Analysis code are accelarated by parellel
+    '''
+    
+    print("Parrell finished! Start wrting json...")
+    
+    infection_size0 = infection_size_list[0]
+    infection_size1 = infection_size_list[1]
+    infection_size = infection_size_list[2]
+
+    if paras.change == 0:
+        change_folder = 'change_m'
+    elif paras.change == 1:
+        change_folder = 'change_T'
+    else:
+        change_folder = 'change_tm'
+
+    now_finish = datetime.now() # current date and time
+    timeExp = now_finish.strftime("%m%d%H:%M")
+
+    ExpPath = base_path + 'analysis/'+ model_name +'_' + analysis_item + '_Analysis_'+ change_folder +'/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/' + timeExp
+
+
+    if not os.path.exists(ExpPath):
+        os.makedirs(ExpPath)
+    print("Mask Analysis results stored in: ", ExpPath)
+
+
+    setting_path = ExpPath + '/' + 'Settings'
+    if not os.path.exists(setting_path):
+        os.mkdir(setting_path)
+
+    res_path = ExpPath + '/' + 'Results'
+    if not os.path.exists(res_path):
+        os.mkdir(res_path) 
+
+    with open(setting_path + "/paras.json", "w") as fp:
+        json.dump(vars(paras),fp) 
+
+
+    with open(res_path + "/infection_size.json", "w") as fp:
+        json.dump(infection_size.copy(),fp) 
+
+    with open(res_path + "/infection_size0.json", "w") as fp:
+        json.dump(infection_size0.copy(),fp) 
+    with open(res_path + "/infection_size1.json", "w") as fp:
+        json.dump(infection_size1.copy(),fp) 
+    
 def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
+    ''' Save the results for simulation.
+        Analysis code are accelarated by Ray.
+    '''
     num_nodes = paras.n
     numExp = paras.e
     thrVal = paras.th
@@ -78,7 +132,7 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_l
     else:
         change_folder = 'change_tm'
         
-    ExpPath = '/mnt/hdd-storage/ytian/ns/simulation/' + 'Mask2Results_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/'  + 'n' + str(num_nodes) + '_totalexp' + str(numExp) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(check_point) +'_cp' + str(cp)
+    ExpPath = base_path + 'simulation/' + 'Mask2Results_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/'  + 'n' + str(num_nodes) + '_totalexp' + str(numExp) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(check_point) +'_cp' + str(cp)
 
     if not os.path.exists(ExpPath):
         os.makedirs(ExpPath)
@@ -94,34 +148,6 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_l
     res_path = ExpPath + '/' + 'Results'
     if not os.path.exists(res_path):
         os.mkdir(res_path) 
-
-#     res_paths1 = res_path+ '/start-mask'
-#     if not os.path.exists(res_paths1):
-#         os.mkdir(res_paths1)
-
-#     res_paths2 = res_path+ '/start-nomask'
-#     if not os.path.exists(res_paths2):
-#         os.mkdir(res_paths2)
-
-    ### Experiment Parameters ###
-#     paras = dict()
-#     paras['e'] = check_point
-#     paras['n'] = num_nodes
-#     paras['th'] = thrVal
-#     paras['tm1'] = T_mask1
-#     paras['tm2'] = T_mask2
-#     paras['m'] = mask_prob
-#     paras['T'] = T
-#     paras['md'] = degree_max
-#     paras['ns'] = num_samples
-#     paras['meandegree'] = mean_degree
-#     paras['start_strain '] = start_strain
-#     paras['check_point'] = cp
-    
-    
-
-
-
 
     with open(setting_path + '/paras.json', 'w') as fp:
         json.dump(vars(paras), fp)

@@ -29,12 +29,6 @@ def create_network(mean_degree, num_nodes):
         degree_sequence = np.random.poisson(mean_degree, num_nodes)
     return ig.Graph.Degree_Sequence(list(degree_sequence))
 
-@ray.remote
-def runExp(i, mean_degree, num_nodes, T_list, mask_prob, start_strain): #### should add start_strain
-    network = create_network(mean_degree, num_nodes)
-    size, size1, size2 = evolution(network, T_list, mask_prob, start_strain)
-    return div(size,num_nodes), [div(size1,num_nodes), div(size2,num_nodes)]
-
 def infected_rule(infected_neighbors_dict, T_list, susceptible_nodes, num_strain, mask_prob, mask_status):
     new_nodes_list = [set(), set()]
     if len(infected_neighbors_dict.keys()) != 0:
@@ -118,6 +112,12 @@ def evolution(g, T_list, mask_prob, start_strain):
     num_infected = sum([len(s) for s in strain_list])
     num_infected1, num_infected2 = map(len, strain_list)
     return num_infected, num_infected1, num_infected2
+
+@ray.remote
+def runExp(i, mean_degree, num_nodes, T_list, mask_prob, start_strain): #### should add start_strain
+    network = create_network(mean_degree, num_nodes)
+    size, size1, size2 = evolution(network, T_list, mask_prob, start_strain)
+    return div(size,num_nodes), [div(size1,num_nodes), div(size2,num_nodes)]
 
 def main():
     ########### Get commandline input ###########

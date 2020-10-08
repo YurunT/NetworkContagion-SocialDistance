@@ -1,11 +1,8 @@
+sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
 from __future__ import division
 import argparse
 import math
 import sys, site, os
-
-site.addsitedir('/afs/ece.cmu.edu/usr/reletreb/dep/lib/python2.7/site-packages')
-
-
 import numpy as np
 from scipy.optimize import fsolve
 from scipy.special import comb
@@ -16,10 +13,10 @@ import multiprocessing
 from multiprocessing import Manager
 from joblib import Parallel, delayed
 import json
+from tnn import *
 from datetime import datetime
 
-print('Running Mutation_ES_Analysis.py ...')
-
+########### Mutation Model ES Analysis -- Parellel ########### 
 def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
     T1 = T * T_mask1 
     T2 = T * T_mask1 * T_mask2
@@ -33,38 +30,7 @@ def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
     
     return trans_dict    
 
-def generate_new_transmissibilities_mutation(T_mask1, T_mask2, T, m):
-    trans_dict = generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m)
-    T1 = trans_dict['T1']
-    T2 = trans_dict['T2']
-    T3 = trans_dict['T3']
-    T4 = trans_dict['T4']
 
-    Q1 = T1 * (1 - m) + T2 * m
-    Q2 = T3 * (1 - m) + T4 * m
-
-    mu11 = T2 * m / Q1
-    mu12 = T1 * (1 - m) / Q1
-    mu22 = T3 * (1 - m) / Q2
-    mu21 = T4 * m / Q2
-
-    Q_dict = {
-        "Q1": Q1,
-        "Q2": Q2}
-    
-    mu_dict = {'mu11': mu11,
-               'mu12': mu12,
-               'mu22': mu22,
-               'mu21': mu21,}
-
-#     print("Q1: %.5f" %Q1)
-#     print("Q2: %.5f" %Q2)
-
-#     print("mu11: %.5f" %mu11)
-#     print("mu12: %.5f" %mu12)
-#     print("mu22: %.5f" %mu22)
-#     print("mu21: %.5f" %mu21)
-    return Q_dict, mu_dict
 
 def obtain_val_r_1(v1, v2, t1, lambda_r):
     val = 0
