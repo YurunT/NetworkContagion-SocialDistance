@@ -16,6 +16,7 @@ from output_module import *
 from tnn import generate_new_transmissibilities_mask
 
 ray.init()
+
 def div(x, y):
     if y == 0:
         return 0
@@ -28,23 +29,13 @@ def create_network(mean_degree, num_nodes):
         degree_sequence = np.random.poisson(mean_degree, num_nodes)
     return ig.Graph.Degree_Sequence(list(degree_sequence))
 
-    
 @ray.remote
 def runExp(i, mean_degree, num_nodes, T_list, mask_prob, start_strain): #### should add start_strain
     network = create_network(mean_degree, num_nodes)
     size, size1, size2 = evolution(network, T_list, mask_prob, start_strain)
-#     fractionDic[i] = div(size,num_nodes)
-#     infectedPerStDic[i] = [div(size1,num_nodes), div(size2,num_nodes)]
     return div(size,num_nodes), [div(size1,num_nodes), div(size2,num_nodes)]
 
 def infected_rule(infected_neighbors_dict, T_list, susceptible_nodes, num_strain, mask_prob, mask_status):
-    """
-    Changes:
-    1. Change paramenter mutation_prob to mask_prob
-    2. Add one line in line 48 to 61
-    3. Comment line 66 to 72
-    4. Add line 73
-    """
     new_nodes_list = [set(), set()]
     if len(infected_neighbors_dict.keys()) != 0:
         for node in infected_neighbors_dict:
@@ -129,39 +120,19 @@ def evolution(g, T_list, mask_prob, start_strain):
     return num_infected, num_infected1, num_infected2
 
 def main():
-    ########### Paras & Path preparation ###########
+    ########### Get commandline input ###########
     paras = parse_args(sys.argv[1:])
+    mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
 
-    num_nodes = paras.n
-    numExp = paras.e
-    thrVal = paras.th
-    num_cores = min(paras.nc,multiprocessing.cpu_count())
-    # num_cores = multiprocessing.cpu_count()
-    mask_prob = paras.m
-    T_mask1 = paras.tm1
-    T_mask2 = paras.tm2
-    T = paras.T
-    degree_max = paras.maxd
-    degree_min = paras.mind
-    num_samples = paras.ns
-    check_point = paras.cp
-    change = paras.change
+    print('-------Parameter Setting-------\n', vars(paras))
+    print("mean_degree_list:", mean_degree_list)
+    print('-------Parameter Setting-------\n')
 
-    mean_degree_list = np.linspace(degree_min, degree_max, num_samples)
-
-
-    print("Node number:", num_nodes)
-    print("Exp number:", numExp)
-    print("Num of cores used: ", num_cores)
-    print("mean_degree_list: [%d, %d], num = %d" %(degree_min, degree_max, num_samples))
-
-    trans_dict = generate_new_transmissibilities_mask(T_mask1, T_mask2, T, mask_prob)
-
+    trans_dict = generate_new_transmissibilities_mask(paras.tm1, paras.tm2, paras.T, paras.m)
     t1 = trans_dict['T1']
     t2 = trans_dict['T2']
     t3 = trans_dict['T3']
     t4 = trans_dict['T4']
-
     T_list = [t1, t2, t3, t4]
 
 
@@ -169,24 +140,21 @@ def main():
     now = datetime.now() # current date and time
     start_time = time.time()
     timeExp = now.strftime("%m%d%H:%M")
-    print("Exp start at:" + timeExp)
-
+    print("-------Exp start at:" + timeExp + '-------')
 
     for start_strain in [1, 2]:
         for mean_degree in mean_degree_list:
-            for cp in range(1, int(numExp/check_point) + 1): 
+            for cp in range(1, int(paras.e/paras.cp) + 1): 
                 results_ids = []
-                for i in range(check_point):
-                    results_ids.append(runExp.remote(i, mean_degree, num_nodes, T_list, mask_prob, start_strain,))  
+                for i in range(paras.cp):
+                    results_ids.append(runExp.remote(i, mean_degree, paras.n, T_list, paras.m, start_strain,))  
                 results = ray.get(results_ids)
-                print(len(results))
-                write_results(results, start_strain, mean_degree, cp, timeExp, check_point, thrVal, change, mask_prob, T, T_mask1, T_mask2, num_nodes, numExp, degree_max, num_samples, mean_degree_list, T_list, start_time)
+                write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,)
 
 
     now_finish = datetime.now() # current date and time
-    timeExp = now_finish.strftime("%m%d%H:%M")
-    print("Done! at:" + timeExp)
-    print("--- %.2s seconds ---" % (time.time() - start_time))
+    print("All Done! for:" + timeExp)
+    print("--- %.2s seconds in total ---" % (time.time() - start_time))
     
     
 main()

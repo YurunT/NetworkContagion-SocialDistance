@@ -6,6 +6,6 @@ for p_mask in 0.6
 do
 echo $p_mask
 
-time python sim-ray.py  -n 50 -e 10 -th 0.3 -m $p_mask -T 0.7 -tm1 0.4 -tm2 0.6 -mind 0 -maxd 10 -ns 50 -nc 40 -cp 2 -change 0
+time python sim-ray.py  -n 50 -e 10 -th 0.3 -m $p_mask -T 0.7 -tm1 0.4 -tm2 0.6 -mind 5 -maxd 5 -ns 1 -nc 40 -cp 2 -change 0
 
 done

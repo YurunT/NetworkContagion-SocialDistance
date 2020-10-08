@@ -12,7 +12,21 @@ def div(x, y):
     else:
         return x*1.0/y
     
-def write_results(results, start_strain, mean_degree, cp, timeExp, check_point, thrVal, change, mask_prob, T, T_mask1, T_mask2, num_nodes, numExp, degree_max, num_samples, mean_degree_list, T_list, start_time):
+def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
+    num_nodes = paras.n
+    numExp = paras.e
+    thrVal = paras.th
+    mask_prob = paras.m
+    T_mask1 = paras.tm1
+    T_mask2 = paras.tm2
+    T = paras.T
+    degree_max = paras.maxd
+    degree_min = paras.mind
+    num_samples = paras.ns
+    check_point = paras.cp
+    change = paras.change
+    num_cores = paras.nc
+    
     Prob_Emergence = defaultdict(list)
     AvgValidSize = defaultdict(list)
     AvgSize = defaultdict(list)
@@ -90,19 +104,19 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, check_point, 
 #         os.mkdir(res_paths2)
 
     ### Experiment Parameters ###
-    paras = dict()
-    paras['e'] = check_point
-    paras['n'] = num_nodes
-    paras['th'] = thrVal
-    paras['tm1'] = T_mask1
-    paras['tm2'] = T_mask2
-    paras['m'] = mask_prob
-    paras['T'] = T
-    paras['md'] = degree_max
-    paras['ns'] = num_samples
-    paras['meandegree'] = mean_degree
-    paras['start_strain '] = start_strain
-    paras['check_point'] = cp
+#     paras = dict()
+#     paras['e'] = check_point
+#     paras['n'] = num_nodes
+#     paras['th'] = thrVal
+#     paras['tm1'] = T_mask1
+#     paras['tm2'] = T_mask2
+#     paras['m'] = mask_prob
+#     paras['T'] = T
+#     paras['md'] = degree_max
+#     paras['ns'] = num_samples
+#     paras['meandegree'] = mean_degree
+#     paras['start_strain '] = start_strain
+#     paras['check_point'] = cp
     
     
 
@@ -110,7 +124,7 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, check_point, 
 
 
     with open(setting_path + '/paras.json', 'w') as fp:
-        json.dump(paras, fp)
+        json.dump(vars(paras), fp)
 
     ### Degree list ###
     np.save(setting_path + '/mean_degree_list.npy', np.array(mean_degree_list)) 
@@ -134,7 +148,7 @@ def write_results(results, start_strain, mean_degree, cp, timeExp, check_point, 
     
     now_finish = datetime.now() # current date and time
     timeExp = now_finish.strftime("%m%d%H:%M")
-    print("checkpoint %d Done! at: %s" %(cp, timeExp))
+    print("checkpoint %d Done! for exp %s" %(cp, timeExp))
     print("--- %.2s seconds ---" % (time.time() - start_time))
 
     
