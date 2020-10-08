@@ -133,6 +133,11 @@ def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
     T3 = T
     T4 = T * T_mask2
 
+    T2 = 0.126
+    T1 = 0.18
+    T4 = 0.42
+    T3 = 0.6
+
     trans_dict = {'T1': T1,
                   'T2': T2,
                   'T3': T3,
@@ -148,8 +153,10 @@ def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
 
 ########### Paras & Path preparation ###########
 paras = parse_args(sys.argv[1:])
-mean_degree_list = [3] #np.linspace(0, 10, 50)
-mean_degree = 3
+mean_degree_list = [2.2, 2.4, 2.5, 2.6, 2.64, 2.68, 2.72, 2.76, 2.8, 2.84, 2.88, 2.92, 2.96, 3.0] #np.linspace(0, 10, 50)
+print("mead degree list:", mean_degree_list)
+# mean_degree = 5
+
 
 
 num_nodes = paras.n
@@ -197,15 +204,18 @@ print("Exp start at:" + timeExp)
 # pList = [0.0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9]
 pList = [0.45]
 
-for mask_prob in pList:
-    print('Running simulations for p = ' + str(mask_prob))
+pe_list = []
+fractionDic_list = []
+for mean_degree in mean_degree_list:
+    print('Running simulations for mean_degree = ' + str(mean_degree))
+    
     fractionDic = [0 for i in range(numExp)]
 
     # running experiments now
     for i in range(numExp):
         #print('Running simulation ' + str(i))
         runExp(i, mean_degree,num_nodes, T_list, mask_prob)
-
+    fractionDic_list.append(fractionDic)
     # output average epidemic sizes
     av_epidemic_size = 0
     num_epidemics = 0
@@ -213,5 +223,10 @@ for mask_prob in pList:
         if fractionDic[i] >= thrVal:
             av_epidemic_size += fractionDic[i]
             num_epidemics += 1
-    av_epidemic_size = div(av_epidemic_size,num_epidemics)
+    av_epidemic_size  = div(av_epidemic_size,num_epidemics)
+    av_prob_emergence = div(num_epidemics, numExp)
+    pe_list.append(av_prob_emergence)
     print('Average size of the epidemic (conditioned on emergence) is ' + str(av_epidemic_size))
+    print('Average probability of emergence is ' + str(av_prob_emergence))
+np.save('ani_thr.npy', np.array(pe_list))
+np.save('ani_thr_raw.npy', np.array(fractionDic_list))
