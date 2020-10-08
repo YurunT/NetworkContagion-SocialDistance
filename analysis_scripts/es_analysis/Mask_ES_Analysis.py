@@ -177,6 +177,7 @@ def main():
 
     Parallel(n_jobs = num_cores)(delayed(get_EpidemicSize)(mean_degree, T_list, paras, infection_size, infection_size0, infection_size1) for mean_degree in mean_degree_list)
 
+    ######### Save the results for all Mean Degrees ########## 
     write_analysis_results(paras, [infection_size0, infection_size1, infection_size], 'Mask', 'ES')
     print("All done!")
 main()

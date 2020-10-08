@@ -40,7 +40,7 @@ def write_analysis_results(paras, infection_size_list, model_name, analysis_item
 
     if not os.path.exists(ExpPath):
         os.makedirs(ExpPath)
-    print("Mask Analysis results stored in: ", ExpPath)
+    print(model_name + " Analysis results stored in: ", ExpPath)
 
 
     setting_path = ExpPath + '/' + 'Settings'
@@ -54,13 +54,12 @@ def write_analysis_results(paras, infection_size_list, model_name, analysis_item
     with open(setting_path + "/paras.json", "w") as fp:
         json.dump(vars(paras),fp) 
 
-
-    with open(res_path + "/infection_size.json", "w") as fp:
+    with open(res_path + "/total.json", "w") as fp:
         json.dump(infection_size.copy(),fp) 
 
-    with open(res_path + "/infection_size0.json", "w") as fp:
+    with open(res_path + "/withmask.json", "w") as fp:
         json.dump(infection_size0.copy(),fp) 
-    with open(res_path + "/infection_size1.json", "w") as fp:
+    with open(res_path + "/nomask.json", "w") as fp:
         json.dump(infection_size1.copy(),fp) 
     
 def write_results(results, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
