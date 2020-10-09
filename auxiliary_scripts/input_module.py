@@ -43,9 +43,4 @@ def parse_args_analysis(args):
     return parser.parse_args(args)
     
 
-def get_mean_degree_list(paras):
-    if paras.mdl is not None: 
-        mean_degree_list = paras.mdl
-    else:
-        mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
-    return mean_degree_list
+

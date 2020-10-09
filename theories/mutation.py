@@ -9,6 +9,15 @@ import scipy.optimize
 import scipy.misc
 from datetime import datetime
 
+def get_t_mu(Q_list, mu_list):
+    t1 = Q_list[0]
+    t2 = Q_list[1]
+    u_r_11 = mu_list[0]
+    u_r_12 = mu_list[1]
+    u_r_22 = mu_list[2]
+    u_r_21 = mu_list[3]
+    
+    return t1, t2, u_r_11, u_r_12, u_r_22, u_r_21
 
 ########### Mutation Model ES Analysis -- Parellel ########### 
 def obtain_val_r_1(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho):
@@ -81,12 +90,7 @@ def equations(p, lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, r
     return (v1 - val_r_1, v2 - val_r_2) 
 
 def cascade_size(lambda_r, Q_list, mu_list, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu):
-    t1 = Q_list[0]
-    t2 = Q_list[1]
-    u_r_11 = mu_list[0]
-    u_r_12 = mu_list[1]
-    u_r_22 = mu_list[2]
-    u_r_21 = mu_list[3]
+    t1, t2, u_r_11, u_r_12, u_r_22, u_r_21 = get_t_mu(Q_list, mu_list) 
     
     h_r_1, h_r_2 = fsolve(equations, (0.9, 0.9), args=(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, ), xtol=1e-10)
 
@@ -131,3 +135,52 @@ def cascade_size(lambda_r, Q_list, mu_list, max_degree, rho, infection_size_mu, 
     infection_size1_mu[lambda_r] = H2
     
     return (lambda_r, H, H1, H2)
+
+########### Mutation Model PE Analysis -- Parellel ########### 
+
+def obtain_val_r_1(v1, v2, t1, u_r_11, u_r_12, mean_degree, max_degree):
+    val = 0
+
+    for d_r in range(0, max_degree):
+        prob_r = poisson.pmf(d_r, mean_degree)
+        val += d_r*prob_r*1.0/mean_degree * ((1 - t1 + t1*u_r_11*v1 + t1*u_r_12*v2)**(d_r-1))
+
+    return val
+
+def obtain_val_r_2(v1, v2, t2, u_r_21, u_r_22, mean_degree, max_degree):
+    val = 0
+
+    for d_r in range(0, max_degree):
+        prob_r = poisson.pmf(d_r, mean_degree)
+        val += d_r*prob_r*1.0/mean_degree * ((1 - t2 + t2*u_r_22*v2 + t2*u_r_21*v1)**(d_r-1))
+
+    return val
+
+def equations(p, mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,):
+    v1, v2 = p
+    val_r_1 = obtain_val_r_1(v1, v2, t_r_1, u_r_11, u_r_12, mean_degree, max_degree)
+    val_r_2 = obtain_val_r_2(v1, v2, t_r_2, u_r_21, u_r_22, mean_degree, max_degree)
+
+    return (v1 - val_r_1, v2 - val_r_2)
+
+
+def cascade_prob(mean_degree, Q_list, mu_list, max_degree, pe_0_list, pe_1_list, pe_list):
+    t_r_1, t_r_2, u_r_11, u_r_12, u_r_22, u_r_21 = get_t_mu(Q_list, mu_list) 
+
+    h_r_1, h_r_2 = fsolve(equations, (0.01, 0.01), args=(mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,), xtol=1e-6)
+
+    H_1 = 0
+    for d_r in range(0, max_degree):
+        prob_r = poisson.pmf(d_r, mean_degree)
+        H_1 += prob_r*((1 - t_r_1 + t_r_1*u_r_11*h_r_1 + t_r_1*u_r_12*h_r_2)**d_r)
+
+    H_2 = 0
+    for d_r in range(0, max_degree):
+        prob_r = poisson.pmf(d_r, mean_degree)
+        H_2 += prob_r*((1 - t_r_2 + t_r_2*u_r_22*h_r_2 + t_r_2*u_r_21*h_r_1)**d_r)
+        
+    print(2 - H_2 - H_1, 1 - H_1, 1 - H_2)
+    pe_0_list[mean_degree] = 1 - H_1
+    pe_1_list[mean_degree] = 1 - H_2
+    pe_list[mean_degree] = 2 - H_2 - H_1
+    return (1 - H_1, 1 - H_2)
