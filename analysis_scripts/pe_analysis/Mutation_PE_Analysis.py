@@ -14,59 +14,6 @@ from joblib import Parallel, delayed
 import json
 from datetime import datetime
 
-"""
-$time python anaEvProb-Parellel.py  -n 200000  -th 0.01 -m 0.45 -T 0.6 -tm1 0.4 -tm2 0.6 -md 2 -ns 2 -nc 40 -change 0
-"""
-print('Running Mutation_PE_Analysis.py ...')
-
-########### Mutation Model PE Analysis -- Parellel ########### 
-def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
-    T1 = T * T_mask1 
-    T2 = T * T_mask1 * T_mask2
-    T3 = T 
-    T4 = T * T_mask2
-    
-
-    trans_dict = {'T1': T1,
-                  'T2': T2,
-                  'T3': T3,
-                  'T4': T4}
-    
-    return trans_dict    
-
-def generate_new_transmissibilities_mutation(T_mask1, T_mask2, T, m):
-    trans_dict = generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m)
-    T1 = trans_dict['T1']
-    T2 = trans_dict['T2']
-    T3 = trans_dict['T3']
-    T4 = trans_dict['T4']
-
-    Q1 = T1 * (1 - m) + T2 * m
-    Q2 = T3 * (1 - m) + T4 * m
-
-    mu11 = T2 * m / Q1
-    mu12 = T1 * (1 - m) / Q1
-    mu22 = T3 * (1 - m) / Q2
-    mu21 = T4 * m / Q2
-
-    Q_dict = {
-        "Q1": Q1,
-        "Q2": Q2}
-    
-    mu_dict = {'mu11': mu11,
-               'mu12': mu12,
-               'mu22': mu22,
-               'mu21': mu21,}
-
-#     print("Q1: %.5f" %Q1)
-#     print("Q2: %.5f" %Q2)
-
-#     print("mu11: %.5f" %mu11)
-#     print("mu12: %.5f" %mu12)
-#     print("mu22: %.5f" %mu22)
-#     print("mu21: %.5f" %mu21)
-    return Q_dict, mu_dict
-
 
 def obtain_val_r_1(v1, v2, t1, mean_degree):
     val = 0

@@ -1,4 +1,3 @@
-sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
 from __future__ import division
 import argparse
 import math
@@ -13,26 +12,14 @@ import multiprocessing
 from multiprocessing import Manager
 from joblib import Parallel, delayed
 import json
-from tnn import *
 from datetime import datetime
+sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
+from tnn import *
+from input_module import parse_args
+from output_module import write_analysis_results
 
 ########### Mutation Model ES Analysis -- Parellel ########### 
-def generate_new_transmissibilities_mask(T_mask1, T_mask2, T, m):
-    T1 = T * T_mask1 
-    T2 = T * T_mask1 * T_mask2
-    T3 = T 
-    T4 = T * T_mask2
-    
-    trans_dict = {'T1': T1,
-                  'T2': T2,
-                  'T3': T3,
-                  'T4': T4}
-    
-    return trans_dict    
-
-
-
-def obtain_val_r_1(v1, v2, t1, lambda_r):
+def obtain_val_r_1(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho):
     val = 0
 
     for d_r in range(0, max_degree):
@@ -63,7 +50,7 @@ def obtain_val_r_1(v1, v2, t1, lambda_r):
 
     return rho + (1 - rho)*val  
 
-def obtain_val_r_2(v1, v2, t2, lambda_r):
+def obtain_val_r_2(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho):
     val = 0
 
     for d_r in range(0, max_degree):
@@ -94,15 +81,15 @@ def obtain_val_r_2(v1, v2, t2, lambda_r):
 
     return rho + (1 - rho)*val 
 
-def equations(p, lambda_r):
+def equations(p, lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho):
     v1, v2 = p
-    val_r_1 = obtain_val_r_1(v1, v2, t1, lambda_r)
-    val_r_2 = obtain_val_r_2(v1, v2, t2, lambda_r)
+    val_r_1 = obtain_val_r_1(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho)
+    val_r_2 = obtain_val_r_2(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho)
 
     return (v1 - val_r_1, v2 - val_r_2) 
 
-def cascade_size(lambda_r):
-    h_r_1, h_r_2 = fsolve(equations, (0.9, 0.9), args=(lambda_r), xtol=1e-10)
+def cascade_size(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu):
+    h_r_1, h_r_2 = fsolve(equations, (0.9, 0.9), args=(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, ), xtol=1e-10)
 
     H = 0
     H1 = 0
@@ -146,120 +133,39 @@ def cascade_size(lambda_r):
     
     return (lambda_r, H, H1, H2)
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(description = 'Parameters')
-    parser.add_argument('-n', type = int, default = 200000, help='200,000 (default); the number of nodes')
-    parser.add_argument('-e', type = int, default = 50, help='50 (default); the number of experiments')
-    parser.add_argument('-m', type = float, default = 0.6, help='0.6 (default); the prob of wearing a mask')
-    parser.add_argument('-tm1', type = float, default = 0.5, help='0.5 (default); T_mask1')
-    parser.add_argument('-tm2', type = float, default = 0.5, help='0.5 (default); T_mask2')
-    parser.add_argument('-T', type = float, default = 0.6, help='0.6 (default); transmissibility of the orinigal virus')
-    parser.add_argument('-th', type = float, default = 0.001, help='0.001 (default); the treshold to consider a component giant')
-    parser.add_argument('-nc', type = int, default = 12, help='number of Cores')
-#     parser.add_argument('-md', type = int, default = 10, help='[0, max_degree]')
-    parser.add_argument('-maxd', type = int, default = 10, help='[min_degree, max_degree]')
-    parser.add_argument('-mind', type = int, default = 0, help='[max_degree, max_degree]')
-    parser.add_argument('-ns', type = int, default = 50, help='Num of sample within [0, max_degree]')
-    parser.add_argument('-change', type = int, default = 0, help='Change m(0), T(1), tm(2)')
-    return parser.parse_args(args)
 
-paras = parse_args(sys.argv[1:])
-numNodes = paras.n
-rho = 1.0/numNodes
+def main():
+    paras = parse_args(sys.argv[1:])
+    mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
+    max_degree = 4 * paras.maxd # inf
+    num_cores = min(multiprocessing.cpu_count(), paras.nc)
+    rho = 1 * 1.0 /paras.n
+    q_dict, mu_dict = generate_new_transmissibilities_mutation(paras.tm1, paras.tm2, paras.T, paras.m)
 
-numExp = paras.e
-thrVal = paras.th
-num_cores = min(paras.nc,multiprocessing.cpu_count())
-mask_prob = paras.m
-T_mask1 = paras.tm1
-T_mask2 = paras.tm2
-T = paras.T
-degree_max = paras.maxd
-degree_min = paras.mind
-num_samples = paras.ns
-change = paras.change
-
-mean_degree_list = np.linspace(0, degree_max, num_samples)
-max_degree = 2 * degree_max # inf
-
-q_dict, mu_dict = generate_new_transmissibilities_mutation(T_mask1, T_mask2, T, mask_prob)
-
-t1 = q_dict['Q1']
-t2 = q_dict['Q2']
-m1 = mu_dict['mu11']
-m2 = mu_dict['mu22']
-
-paras = dict()
-paras['n'] = numNodes
-paras['th'] = thrVal
-paras['m'] = mask_prob
-paras['T'] = T
-paras['tm1'] = T_mask1
-paras['tm2'] = T_mask2
-paras['md'] = degree_max
-paras['ns'] = num_samples
-
-print(paras)
-
-infection_size_mu = Manager().dict()
-infection_size0_mu = Manager().dict()
-infection_size1_mu = Manager().dict()
-
-num_cores = multiprocessing.cpu_count()
-numExp = len(mean_degree_list)
-
-u_r_11 = m1
-u_r_12 = 1-u_r_11
-u_r_22 = m2
-u_r_21 = 1-u_r_22
-
-Parallel(n_jobs = num_cores)(delayed(cascade_size)(lambda_r) for lambda_r in mean_degree_list)
-
-print("Parrell finished! Start wrting json...")
-
-
-######### Save the results for all Mean Degrees ########## 
-print("Parellel finished! Start wrting json...")
-# print(infection_size_mu)
-# print(infection_size0_mu)
-# print(infection_size1_mu)
-
-if change == 0:
-    change_folder = 'change_m'
-elif change == 1:
-    change_folder = 'change_T'
-else:
-    change_folder = 'change_tm'
+    t1 = q_dict['Q1']
+    t2 = q_dict['Q2']
+    m1 = mu_dict['mu11']
+    m2 = mu_dict['mu22']
     
-now_finish = datetime.now() # current date and time
-timeExp = now_finish.strftime("%m%d%H:%M")
+    u_r_11 = m1
+    u_r_12 = 1-u_r_11
+    u_r_22 = m2
+    u_r_21 = 1-u_r_22
 
-ExpPath = 'Mutation_ES_Analysis_'+ change_folder +'/' + 'm' + str(mask_prob) + '_T' + "{0:.2f}".format(T) + '_tm1_' + "{0:.2f}".format(T_mask1) + '_tm2_' + "{0:.2f}".format(T_mask2) + '/' + timeExp
+    print(vars(paras))
 
+    infection_size_mu = Manager().dict()
+    infection_size0_mu = Manager().dict()
+    infection_size1_mu = Manager().dict()
 
-if not os.path.exists(ExpPath):
-    os.makedirs(ExpPath)
-print("MutationRay Analysis results stored in: ", ExpPath)
+    Parallel(n_jobs = num_cores)(delayed(cascade_size)(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu) for lambda_r in mean_degree_list)
 
+    ######### Save the results for all Mean Degrees ########## 
+    infection_size_list = []
+    infection_size_list.append(infection_size0_mu)
+    infection_size_list.append(infection_size1_mu)
+    infection_size_list.append(infection_size_mu)
+    write_analysis_results(paras, infection_size_list, 'Mutation', 'ES')
 
-setting_path = ExpPath + '/' + 'Settings'
-if not os.path.exists(setting_path):
-    os.mkdir(setting_path)
-
-res_path = ExpPath + '/' + 'Results'
-if not os.path.exists(res_path):
-    os.mkdir(res_path) 
-    
-with open(setting_path + "/paras.json", "w") as fp:
-    json.dump(paras,fp) 
-
-
-with open(res_path + "/infection_size.json", "w") as fp:
-    json.dump(infection_size_mu.copy(),fp) 
-    
-with open(res_path + "/infection_size0.json", "w") as fp:
-    json.dump(infection_size0_mu.copy(),fp) 
-with open(res_path + "/infection_size1.json", "w") as fp:
-    json.dump(infection_size1_mu.copy(),fp) 
-    
-print("All done!")
+    print("All done!")
+main()

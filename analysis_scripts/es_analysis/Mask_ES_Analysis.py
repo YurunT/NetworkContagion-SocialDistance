@@ -1,4 +1,3 @@
-sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
 from __future__ import division
 import argparse
 import math
@@ -14,6 +13,7 @@ from multiprocessing import Manager
 from joblib import Parallel, delayed
 import json
 from datetime import datetime
+sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
 from tnn import *
 from input_module import parse_args
 from output_module import write_analysis_results
