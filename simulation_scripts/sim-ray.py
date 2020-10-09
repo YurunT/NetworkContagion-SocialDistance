@@ -14,6 +14,7 @@ sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 from input_module import *
 from output_module import *
 from tnn import generate_new_transmissibilities_mask
+from analysis_main_aux import *
 
 ray.init()
 

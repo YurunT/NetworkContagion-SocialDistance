@@ -1,23 +1,20 @@
-import json
-import argparse
-import collections
 import random
 import sys, pdb
 import site, os
-# site.addsitedir('/afs/ece.cmu.edu/usr/reletreb/dep/lib/python2.7/site-packages')
-import matplotlib.pyplot as plt
+import collections
 import numpy as np
 import igraph as ig
 from datetime import datetime
+import time
 from joblib import Parallel, delayed
-import multiprocessing, time
+import multiprocessing
 from multiprocessing import Manager
-from collections import defaultdict 
 import ray
 sys.path.append(os.path.abspath("../auxiliary_scripts/"))
-from input_module import parse_args
+from input_module import *
 from output_module import *
 from tnn import generate_new_transmissibilities_mask
+from analysis_main_aux import *
 
 # Modified as least as possible from Rashad's code
 ray.init()
