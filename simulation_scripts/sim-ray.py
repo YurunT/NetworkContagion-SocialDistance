@@ -11,7 +11,7 @@ import multiprocessing
 from multiprocessing import Manager
 import ray
 sys.path.append(os.path.abspath("../auxiliary_scripts/"))
-from input_module import parse_args
+from input_module import *
 from output_module import *
 from tnn import generate_new_transmissibilities_mask
 
@@ -122,7 +122,9 @@ def runExp(i, mean_degree, num_nodes, T_list, mask_prob, start_strain): #### sho
 def main():
     ########### Get commandline input ###########
     paras = parse_args(sys.argv[1:])
-    mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
+    
+    mean_degree_list = get_mean_degree_list(paras)
+        
 
     print('-------Parameter Setting-------\n', vars(paras))
     print("mean_degree_list:", mean_degree_list)

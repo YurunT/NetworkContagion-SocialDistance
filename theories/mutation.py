@@ -1,5 +1,4 @@
 from __future__ import division
-import argparse
 import math
 import sys, site, os
 import numpy as np
@@ -8,15 +7,8 @@ from scipy.special import comb
 from scipy.stats import poisson
 import scipy.optimize
 import scipy.misc
-import multiprocessing
-from multiprocessing import Manager
-from joblib import Parallel, delayed
-import json
 from datetime import datetime
-sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
-from tnn import *
-from input_module import parse_args
-from output_module import write_analysis_results
+
 
 ########### Mutation Model ES Analysis -- Parellel ########### 
 def obtain_val_r_1(v1, v2, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, lambda_r, max_degree, rho):
@@ -88,7 +80,14 @@ def equations(p, lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, r
 
     return (v1 - val_r_1, v2 - val_r_2) 
 
-def cascade_size(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu):
+def cascade_size(lambda_r, Q_list, mu_list, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu):
+    t1 = Q_list[0]
+    t2 = Q_list[1]
+    u_r_11 = mu_list[0]
+    u_r_12 = mu_list[1]
+    u_r_22 = mu_list[2]
+    u_r_21 = mu_list[3]
+    
     h_r_1, h_r_2 = fsolve(equations, (0.9, 0.9), args=(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, ), xtol=1e-10)
 
     H = 0
@@ -132,40 +131,3 @@ def cascade_size(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, r
     infection_size1_mu[lambda_r] = H2
     
     return (lambda_r, H, H1, H2)
-
-
-def main():
-    paras = parse_args(sys.argv[1:])
-    mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
-    max_degree = 4 * paras.maxd # inf
-    num_cores = min(multiprocessing.cpu_count(), paras.nc)
-    rho = 1 * 1.0 /paras.n
-    q_dict, mu_dict = generate_new_transmissibilities_mutation(paras.tm1, paras.tm2, paras.T, paras.m)
-
-    t1 = q_dict['Q1']
-    t2 = q_dict['Q2']
-    m1 = mu_dict['mu11']
-    m2 = mu_dict['mu22']
-    
-    u_r_11 = m1
-    u_r_12 = 1-u_r_11
-    u_r_22 = m2
-    u_r_21 = 1-u_r_22
-
-    print(vars(paras))
-
-    infection_size_mu = Manager().dict()
-    infection_size0_mu = Manager().dict()
-    infection_size1_mu = Manager().dict()
-
-    Parallel(n_jobs = num_cores)(delayed(cascade_size)(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu) for lambda_r in mean_degree_list)
-
-    ######### Save the results for all Mean Degrees ########## 
-    infection_size_list = []
-    infection_size_list.append(infection_size0_mu)
-    infection_size_list.append(infection_size1_mu)
-    infection_size_list.append(infection_size_mu)
-    write_analysis_results(paras, infection_size_list, 'Mutation', 'ES')
-
-    print("All done!")
-main()

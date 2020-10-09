@@ -1,5 +1,4 @@
 from __future__ import division
-import argparse
 import math
 import sys, site, os
 import numpy as np
@@ -8,15 +7,7 @@ from scipy.special import comb
 from scipy.stats import poisson
 import scipy.optimize
 import scipy.misc
-import multiprocessing
-from multiprocessing import Manager
-from joblib import Parallel, delayed
-import json
 from datetime import datetime
-sys.path.append(os.path.abspath("../../auxiliary_scripts/"))
-from tnn import *
-from input_module import parse_args
-from output_module import write_analysis_results
 
 ########### Mask Model ES Analysis -- Parellel ########### 
 def generate_degree_list(mean_degree, nodeN):
@@ -92,12 +83,11 @@ def func_fix(A, mean_degree, nodeN, T_list, m):
 def func_root(A, mean_degree, nodeN, T_list, m, k_max):
     return np.array(p_A_vec(mean_degree, nodeN, T_list, m, A[0], A[1], k_max)) - np.array(A)
 
-def get_EpidemicSize(mean_degree, T_list, paras, infection_size, infection_size0, infection_size1):
+def get_EpidemicSize(mean_degree, k_max, T_list, paras, infection_size, infection_size0, infection_size1):
     '''
     S
     '''
     init_A = (0.9, 0.9)
-    k_max = 4 * paras.maxd
     m = paras.m
 
     A_0_1_root = optimize.fsolve(func_root, init_A, args=(mean_degree, paras.n, T_list, m, k_max))
@@ -148,36 +138,9 @@ def get_EpidemicSize(mean_degree, T_list, paras, infection_size, infection_size0
         pa_L_1 += p_k * p_ab_1
         pa_L += p_k * (m * p_ab_0 + (1 - m) * p_ab_1) 
     
-    
+    print(mean_degree, pa_L, pa_L_0, pa_L_1)
     infection_size0[mean_degree] = pa_L_0
     infection_size1[mean_degree] = pa_L_1
     infection_size[mean_degree]  = pa_L
     
     return pa_L_0, pa_L_1, pa_L, 1 - np.array(A_0_1_root)
-
-
-def main():
-    ###### Get commandline input ######
-    paras = parse_args(sys.argv[1:])
-    mean_degree_list = np.linspace(paras.mind, paras.maxd, paras.ns)
-    k_max = 4 * paras.maxd # inf
-    num_cores = min(paras.nc,multiprocessing.cpu_count())
-    T_list = list(generate_new_transmissibilities_mask(paras.tm1, paras.tm2, paras.T, paras.m).values())
-    
-    print('-------Parameter Setting-------\n', vars(paras))
-    print("K_max: ", k_max)
-    print("num_cores:", num_cores)
-    print("mean_degree_list:", mean_degree_list)
-    print('-------Parameter Setting-------\n')
-
-    ###### Run on multiple cores using parellel ###### 
-    infection_size = Manager().dict()
-    infection_size0 = Manager().dict()
-    infection_size1 = Manager().dict()
-
-    Parallel(n_jobs = num_cores)(delayed(get_EpidemicSize)(mean_degree, T_list, paras, infection_size, infection_size0, infection_size1) for mean_degree in mean_degree_list)
-
-    ######### Save the results for all Mean Degrees ########## 
-    write_analysis_results(paras, [infection_size0, infection_size1, infection_size], 'Mask', 'ES')
-    print("All done!")
-main()

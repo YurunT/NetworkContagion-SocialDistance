@@ -118,6 +118,6 @@ def main():
 
     ######### Save the results for all Mean Degrees ########## 
     pe_list = [pe_0_list_m, pe_1_list_m, pe_list_m]
-    write_analysis_results(paras, pe_list, 'Mask', 'PE')
+    write_analysis_results(paras, pe_list, 'Mask', 'PE', mean_degree_list)
     print("All done!")
 main()

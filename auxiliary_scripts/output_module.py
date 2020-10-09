@@ -14,7 +14,35 @@ def div(x, y):
     else:
         return x*1.0/y
     
-def write_analysis_results(paras, infection_size_list, model_name, analysis_item):
+def get_change_name(change):
+    if change == 0:
+        change_folder = 'change_m'
+    elif change == 1:
+        change_folder = 'change_T'
+    else:
+        change_folder = 'change_tm'
+    return change_folder
+
+def generate_path(path_name):
+    if not os.path.exists(path_name):
+        os.makedirs(path_name)
+
+def json_save(file_name, file):
+    with open(file_name, 'w') as fp:
+        json.dump(file, fp)
+        
+def get_expPath(paras, cp, mean_degree, model_name, timeExp, start_strain):
+    change_folder = get_change_name(paras.change)  
+    ExpPath = base_path + 'simulation/' + model_name +'Results_'+ change_folder +'/' + paras.msg + '/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/'  + 'n' + str(paras.n) + '_totalexp' + str(paras.e) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
+    print("Experiment results stored in: ", ExpPath)
+    return ExpPath
+
+def get_analysisPath(paras, model_name, analysis_item, timeExp, change_folder):
+    ExpPath = base_path + 'analysis/'+ model_name +'_' + analysis_item + '_Analysis_'+ change_folder +'/' + paras.msg + '/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/' + timeExp
+    print(model_name + " Analysis results stored in: ", ExpPath)
+    return ExpPath
+    
+def write_analysis_results(paras, infection_size_list, model_name, analysis_item, mean_degree_list):
     ''' Save the results for anaysis.
         Analysis code are accelarated by parellel
     '''
@@ -25,42 +53,23 @@ def write_analysis_results(paras, infection_size_list, model_name, analysis_item
     infection_size1 = infection_size_list[1]
     infection_size = infection_size_list[2]
 
-    if paras.change == 0:
-        change_folder = 'change_m'
-    elif paras.change == 1:
-        change_folder = 'change_T'
-    else:
-        change_folder = 'change_tm'
-
-    now_finish = datetime.now() # current date and time
-    timeExp = now_finish.strftime("%m%d%H:%M")
-
-    ExpPath = base_path + 'analysis/'+ model_name +'_' + analysis_item + '_Analysis_'+ change_folder +'/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/' + timeExp
-
-
-    if not os.path.exists(ExpPath):
-        os.makedirs(ExpPath)
-    print(model_name + " Analysis results stored in: ", ExpPath)
-
-
-    setting_path = ExpPath + '/' + 'Settings'
-    if not os.path.exists(setting_path):
-        os.mkdir(setting_path)
-
+    ######### Generate paths ########## 
+    change_folder = get_change_name(paras.change)
+    timeExp = datetime.now().strftime("%m%d%H:%M")
+    ExpPath = get_analysisPath(paras, model_name, analysis_item, timeExp, change_folder,)
     res_path = ExpPath + '/' + 'Results'
-    if not os.path.exists(res_path):
-        os.mkdir(res_path) 
+    setting_path = ExpPath + '/' + 'Settings'
 
-    with open(setting_path + "/paras.json", "w") as fp:
-        json.dump(vars(paras),fp) 
+    generate_path(ExpPath)
+    generate_path(setting_path)
+    generate_path(res_path)
 
-    with open(res_path + "/total.json", "w") as fp:
-        json.dump(infection_size.copy(),fp) 
-
-    with open(res_path + "/withmask.json", "w") as fp:
-        json.dump(infection_size0.copy(),fp) 
-    with open(res_path + "/nomask.json", "w") as fp:
-        json.dump(infection_size1.copy(),fp) 
+    ######### Save results ########## 
+    json_save(setting_path + "/paras.json",vars(paras))
+    json_save(res_path + "/total.json",    infection_size.copy())
+    json_save(res_path + "/withmask.json", infection_size0.copy())
+    json_save(res_path + "/nomask.json",   infection_size1.copy())
+    np.save(setting_path + '/mean_degree_list.np', mean_degree_list)
     
 def process_sim_res(results, paras, start_strain):
     Prob_Emergence = defaultdict(list)
@@ -107,59 +116,31 @@ def process_sim_res(results, paras, start_strain):
     
     
 def write_results(results, model_name, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
-    ''' Save the results for simulation.
+    ''' Save the checkponint results for simulation.
         Analysis code are accelarated by Ray.
     '''
-    
+    ######### Preprocess the raw results ##########
     Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2 = process_sim_res(results, paras, start_strain)
 
-    ######### Save the results for all Mean Degrees ########## 
-    if paras.change == 0:
-        change_folder = 'change_m'
-    elif paras.change == 1:
-        change_folder = 'change_T'
-    else:
-        change_folder = 'change_tm'
-        
-    ExpPath = base_path + 'simulation/' + model_name +'Results_'+ change_folder +'/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/'  + 'n' + str(paras.n) + '_totalexp' + str(paras.e) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
-
-    if not os.path.exists(ExpPath):
-        os.makedirs(ExpPath)
-    print("Experiment results stored in: ", ExpPath)
-
-#     draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, mask_prob)
-
-
+    ######### Generate paths ########## 
+    ExpPath      = get_expPath(paras, cp, mean_degree, model_name, timeExp, start_strain)
     setting_path = ExpPath + '/' + 'Settings'
-    if not os.path.exists(setting_path):
-        os.mkdir(setting_path)
+    res_path     = ExpPath + '/' + 'Results'
+    
+    generate_path(ExpPath)
+    generate_path(setting_path)
+    generate_path(res_path)
 
-    res_path = ExpPath + '/' + 'Results'
-    if not os.path.exists(res_path):
-        os.mkdir(res_path) 
-
-    with open(setting_path + '/paras.json', 'w') as fp:
-        json.dump(vars(paras), fp)
-
-    ### Degree list ###
+    ######### Save results ########## 
+    json_save(setting_path + '/paras.json', vars(paras))
+    json_save(res_path + '/results.json', results)
     np.save(setting_path + '/mean_degree_list.npy', np.array(mean_degree_list)) 
-
-    ### Transmissibilites and mutation probs for Mutation Model ###
     np.save(setting_path + '/trans_dict_mu.npy', np.array(T_list)) 
-
-
-    ### Results start from mask ###
-    # Processed data #
     np.save(res_path + '/Prob_Emergence.npy', np.array(Prob_Emergence[start_strain])) 
     np.save(res_path + '/AvgValidSize.npy', np.array(AvgValidSize[start_strain])) 
     np.save(res_path + '/StdValidSize.npy', np.array(StdValidSize[start_strain])) 
     np.save(res_path + '/infSt1.npy', np.array(infSt1[start_strain])) 
     np.save(res_path + '/infSt2.npy', np.array(infSt2[start_strain])) 
-    
-    # Raw data #
-    with open(res_path + '/results.json', 'w') as fp:
-        json.dump(results, fp)
-
     
     now_finish = datetime.now() # current date and time
     timeExp = now_finish.strftime("%m%d%H:%M")
