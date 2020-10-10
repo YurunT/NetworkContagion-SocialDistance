@@ -8,11 +8,11 @@ from mask import *
 from mutation import *
 from input_module import *
 from output_module import write_analysis_results
-from analysis_main_aux import *
+from main_aux import *
     
 def main():
     ###### Get commandline input ######
-    paras = parse_args_analysis(sys.argv[1:])
+    paras = parse_args(sys.argv[1:])
     paras_check(paras)
     num_cores, rho, k_max, T_list, Q_list, mu_list, mean_degree_list = resolve_paras(paras)
 
@@ -34,6 +34,6 @@ def main():
         Parallel(n_jobs = num_cores)(delayed(cascade_prob)(i, Q_list, mu_list, k_max, infection_size, infection_size0, infection_size1,) for i in mean_degree_list)
 
     ######### Save the results for all Mean Degrees ########## 
-    write_analysis_results(paras, [infection_size0, infection_size1, infection_size], paras.modelname, paras.itemname, mean_degree_list)
+    write_analysis_results(paras, [infection_size0, infection_size1, infection_size], mean_degree_list)
     print("All done!")
 main()

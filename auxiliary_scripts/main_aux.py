@@ -1,7 +1,9 @@
 import multiprocessing
 import sys, os
+import numpy as np
 sys.path.append(os.path.abspath("."))
 from tnn import *
+from global_vars import *
 
 def get_mean_degree_list(paras):
     if paras.mdl is not None: 
@@ -11,14 +13,25 @@ def get_mean_degree_list(paras):
     return mean_degree_list
 
 def paras_check(paras):
-    model_names = {'mask', 'mutation'}
-    item_names = {'es', 'pe'}
     if paras.modelname not in model_names:
+        print("------------ CMD INPUT INVALID ------------")
         print("Error: NO model named %s!" %paras.modelname)
+        print("Please select from", model_names)
+        print("------------ CMD INPUT INVALID ------------")
         assert False
     if paras.itemname not in item_names:
+        print("------------ CMD INPUT INVALID ------------")
         print("Error: NO analyzed item named %s!" %paras.itemname)
+        print("Please select from", item_names)
+        print("------------ CMD INPUT INVALID ------------")
         assert False
+    if paras.change not in change_metrics_dict.values():
+        print("------------ CMD INPUT INVALID ------------")
+        print("Error: NO change metric as %s!" %paras.change)
+        print("Please select numbers from", change_metrics_dict)
+        print("------------ CMD INPUT INVALID ------------")
+        assert False
+        
            
 def resolve_paras(paras):
     mean_degree_list = get_mean_degree_list(paras)

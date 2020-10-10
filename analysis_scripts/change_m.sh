@@ -1,8 +1,13 @@
 #!/bin/bash
 source activate ytian
 
-for p_mask in  0.6 
+# -modelname: {'mask', 'mutation'}
+# -itemname:  {'es', 'pe'}
+# -mdl: if need to specify a certian mean_degree_list, or please comment this option
+
+
+for p_mask in  0.45
 do
 	echo $p_mask
-    time python analysis.py -modelname mutation -itemname pe -m $p_mask -T 0.7 -tm1 0.4  -tm2 0.6 -mind 3 -maxd 3 -ns 1 -nc 40 -change 0 -msg testmutation -mdl 0.2 0.3 0.4 
+    time python analysis.py -modelname mask -itemname pe -m $p_mask -T 0.6 -tm1 0.3  -tm2 0.7 -mind 0 -maxd 10 -ns 50 -nc 40 -change 0 -msg test -mdl 0.2 0.3 0.4 
 done

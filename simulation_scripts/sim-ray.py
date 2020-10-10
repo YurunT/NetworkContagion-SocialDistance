@@ -14,7 +14,8 @@ sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 from input_module import *
 from output_module import *
 from tnn import generate_new_transmissibilities_mask
-from analysis_main_aux import *
+from main_aux import *
+
 
 ray.init()
 
@@ -123,27 +124,14 @@ def runExp(i, mean_degree, num_nodes, T_list, mask_prob, start_strain): #### sho
 def main():
     ########### Get commandline input ###########
     paras = parse_args(sys.argv[1:])
-    
-    mean_degree_list = get_mean_degree_list(paras)
-        
-
-    print('-------Parameter Setting-------\n', vars(paras))
-    print("mean_degree_list:", mean_degree_list)
-    print('-------Parameter Setting-------\n')
-
-    trans_dict = generate_new_transmissibilities_mask(paras.tm1, paras.tm2, paras.T, paras.m)
-    t1 = trans_dict['T1']
-    t2 = trans_dict['T2']
-    t3 = trans_dict['T3']
-    t4 = trans_dict['T4']
-    T_list = [t1, t2, t3, t4]
-
+    paras_check(paras)
+    num_cores, rho, k_max, T_list, Q_list, mu_list, mean_degree_list = resolve_paras(paras)
 
     ############ Start Exp ############
     now = datetime.now() # current date and time
     start_time = time.time()
-    timeExp = now.strftime("%m%d%H:%M")
-    print("-------Exp start at:" + timeExp + '-------')
+    time_exp = now.strftime("%m%d%H:%M")
+    print("-------Exp start at:" + time_exp + '-------')
 
     for start_strain in [1, 2]:
         for mean_degree in mean_degree_list:
@@ -152,12 +140,10 @@ def main():
                 for i in range(paras.cp):
                     results_ids.append(runExp.remote(i, mean_degree, paras.n, T_list, paras.m, start_strain,))  
                 results = ray.get(results_ids)
-                write_results(results, 'Mask', start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,)
+                write_results(results, start_strain, mean_degree, cp, time_exp, mean_degree_list, T_list, start_time, paras,)
 
 
     now_finish = datetime.now() # current date and time
-    print("All Done! for:" + timeExp)
+    print("All Done! for:" + time_exp)
     print("--- %.2s seconds in total ---" % (time.time() - start_time))
-    
-    
 main()

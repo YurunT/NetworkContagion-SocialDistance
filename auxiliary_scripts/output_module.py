@@ -5,8 +5,9 @@ import numpy as np
 import os
 from datetime import datetime
 import time
-
-base_path = '/mnt/hdd-storage/ytian/ns/'
+import sys, os
+sys.path.append(os.path.abspath("."))
+from global_vars import *
 
 def div(x, y):
     if y == 0:
@@ -31,36 +32,42 @@ def json_save(file_name, file):
     with open(file_name, 'w') as fp:
         json.dump(file, fp)
         
-def get_expPath(paras, cp, mean_degree, model_name, timeExp, start_strain):
-    change_folder = get_change_name(paras.change)  
-    ExpPath = base_path + 'simulation/' + model_name +'Results_'+ change_folder +'/' + paras.msg + '/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/'  + 'n' + str(paras.n) + '_totalexp' + str(paras.e) + '/' + timeExp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
-    print("Experiment results stored in: ", ExpPath)
-    return ExpPath
+def get_para_setting_str(paras):
+    para_setting_str = 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2)
+    return para_setting_str
 
-def get_analysisPath(paras, model_name, analysis_item, timeExp, change_folder):
-    ExpPath = base_path + 'analysis/'+ model_name +'_' + analysis_item + '_Analysis_'+ change_folder +'/' + paras.msg + '/' + 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2) + '/' + timeExp
-    print(model_name + " Analysis results stored in: ", ExpPath)
-    return ExpPath
+def get_common_path(paras):
+    change_folder = get_change_name(paras.change)
+    common_path = paras.modelname + '/' + paras.itemname + '/' + change_folder + '/' + paras.msg + '/' + get_para_setting_str(paras) + '/'
+    return common_path
     
-def write_analysis_results(paras, infection_size_list, model_name, analysis_item, mean_degree_list):
+def get_exp_path(paras, cp, mean_degree, time_exp, start_strain):
+    exp_path = base_path + 'simulation/' + get_common_path(paras) + 'n' + str(paras.n) + '_ttle' + str(paras.e) + '/' + time_exp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
+    print("Experiment path:", exp_path)
+    return exp_path
+
+def get_analysis_path(paras, time_analysis,):
+    analysis_path = base_path + 'analysis/'   + get_common_path(paras) + time_analysis
+    print("Analysis path:", analysis_path)
+    return analysis_path
+    
+def write_analysis_results(paras, infection_size_list, mean_degree_list):
     ''' Save the results for anaysis.
         Analysis code are accelarated by parellel
     '''
-    
-    print("Parrell finished! Start wrting json...")
-    
+    print("Analysis finished! Start wrting json...")
+   
     infection_size0 = infection_size_list[0]
     infection_size1 = infection_size_list[1]
     infection_size = infection_size_list[2]
 
     ######### Generate paths ########## 
-    change_folder = get_change_name(paras.change)
-    timeExp = datetime.now().strftime("%m%d%H:%M")
-    ExpPath = get_analysisPath(paras, model_name, analysis_item, timeExp, change_folder,)
-    res_path = ExpPath + '/' + 'Results'
-    setting_path = ExpPath + '/' + 'Settings'
+    time_analysis = datetime.now().strftime("%m%d%H:%M")
+    analysis_path = get_analysis_path(paras, time_analysis,)
+    res_path = analysis_path + '/' + 'Results'
+    setting_path = analysis_path + '/' + 'Settings'
 
-    generate_path(ExpPath)
+    generate_path(analysis_path)
     generate_path(setting_path)
     generate_path(res_path)
 
@@ -69,7 +76,7 @@ def write_analysis_results(paras, infection_size_list, model_name, analysis_item
     json_save(res_path + "/total.json",    infection_size.copy())
     json_save(res_path + "/withmask.json", infection_size0.copy())
     json_save(res_path + "/nomask.json",   infection_size1.copy())
-    np.save(setting_path + '/mean_degree_list.np', mean_degree_list)
+    np.save(setting_path + '/mean_degree_list.npy', mean_degree_list)
     
 def process_sim_res(results, paras, start_strain):
     Prob_Emergence = defaultdict(list)
@@ -115,7 +122,7 @@ def process_sim_res(results, paras, start_strain):
     return Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2
     
     
-def write_results(results, model_name, start_strain, mean_degree, cp, timeExp, mean_degree_list, T_list, start_time, paras,):
+def write_results(results, start_strain, mean_degree, cp, time_exp, mean_degree_list, T_list, start_time, paras,):
     ''' Save the checkponint results for simulation.
         Analysis code are accelarated by Ray.
     '''
@@ -123,7 +130,7 @@ def write_results(results, model_name, start_strain, mean_degree, cp, timeExp, m
     Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2 = process_sim_res(results, paras, start_strain)
 
     ######### Generate paths ########## 
-    ExpPath      = get_expPath(paras, cp, mean_degree, model_name, timeExp, start_strain)
+    ExpPath      = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
     setting_path = ExpPath + '/' + 'Settings'
     res_path     = ExpPath + '/' + 'Results'
     

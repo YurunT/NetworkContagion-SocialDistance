@@ -219,4 +219,4 @@ def get_ProbEmergence(mean_degree, paras, k_max, T_list, pe_list_m, pe_0_list_m,
     pe_list_m[mean_degree]   = paras.m * E0 + (1 - paras.m) * E1
     pe_0_list_m[mean_degree] = E0
     pe_1_list_m[mean_degree] = E1
-    print(E0, E1) 
+    print(mean_degree, E0, E1) 
