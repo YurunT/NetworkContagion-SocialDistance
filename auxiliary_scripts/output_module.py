@@ -83,49 +83,6 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
     json_save(res_path + "/nomask.json",   infection_size1.copy())
     np.save(setting_path + '/mean_degree_list.npy', mean_degree_list)
     
-def process_sim_res(results, paras,):
-#     Prob_Emergence = 
-#     AvgValidSize = defaultdict(list)
-#     AvgSize = defaultdict(list)
-#     StdValidSize = defaultdict(list)
-#     infSt1 = defaultdict(list)
-#     infSt2 = defaultdict(list)
-    
-    ttlEpidemicsSize = 0
-    numEpidemics_1 = 0
-    numEpidemics_2 = 0
-    numEpidemics = 0
-    Epidemics = []
-    EpidemicsPerSt = [0,0,0]
-    fractionDic = dict()
-    infectedPerStDic = dict()
-    ttlFrac = 0
-
-    for ii in range(paras.cp):
-        fractionDic[ii] = results[ii][0] ###
-        infectedPerStDic[ii] = results[ii][1] ###
-        if fractionDic[ii] >= paras.th:
-            numEpidemics += 1
-            ttlEpidemicsSize += fractionDic[ii]
-            Epidemics.append(fractionDic[ii])
-            EpidemicsPerSt[0] += infectedPerStDic[ii][0]
-            EpidemicsPerSt[1] += infectedPerStDic[ii][1]
-
-        ttlFrac += fractionDic[ii]
-
-    if len(Epidemics) == 0:
-        Epidemics.append(0)
-
-    ######### Record the results for this Mean Degree ##########    
-    Prob_Emergence = (numEpidemics*1.0/(paras.cp))
-    AvgValidSize = (div(ttlEpidemicsSize*1.0, numEpidemics))
-    AvgSize = ttlFrac*1.0/paras.cp
-    StdValidSize = (np.std(Epidemics))
-    infSt1 = (div(EpidemicsPerSt[0],numEpidemics))
-    infSt2 = (div(EpidemicsPerSt[1],numEpidemics))
-    
-    return Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2
-    
     
 def write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,):
     ''' Save the checkponint raw results for simulation.
@@ -144,11 +101,10 @@ def write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start
     print("checkpoint %d Done! for exp %s" %(cp, timeExp))
     print("--- %.2s seconds ---" % (time.time() - start_time))
 
-def write_exp_settings(time_exp, paras, mean_degree_list,):
+def write_exp_settings(time_exp, paras,):
     setting_path = get_setting_path(paras, time_exp)
     generate_path(setting_path)
     json_save(setting_path + 'paras.json', vars(paras))
-    np.save(setting_path + 'mean_degree_list.npy', np.array(mean_degree_list)) 
     return 
     
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, m):

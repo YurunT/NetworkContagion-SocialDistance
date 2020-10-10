@@ -56,8 +56,7 @@ def get_parasobj(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', 
 def load_sim_settings(paras, time_exp):
     setting_path = get_setting_path(paras, time_exp)
     paras_arg = json_load(setting_path + 'paras.json')
-    mean_degree_list = np.load(setting_path + 'mean_degree_list.npy')
-    return paras_arg, mean_degree_list
+    return paras_arg
 
 def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', change_metric='m', n=50, e=10, checkpoint=5, time_exp='',):
     '''Load Simulation Results'''
@@ -83,14 +82,78 @@ def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname=
                 exp_path = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
                 raw[start_strain][mean_degree][cp] = json_load(exp_path + '/results.json') # results has paras.cp exp results
     
-    paras_arg, mean_degree_list = load_sim_settings(paras, time_exp)
+    paras_arg = load_sim_settings(paras, time_exp)
     
-    return raw, paras_arg, mean_degree_list
-    
-def get_sim_processed_results(raw, paras, thr,):
+    return raw, paras_arg
+
+def process_sim_res(results, checkpoint, thr):    
+    ttlEpidemicsSize = 0
+    numEpidemics_1 = 0
+    numEpidemics_2 = 0
+    numEpidemics = 0
+    Epidemics = []
+    EpidemicsPerSt = [0,0,0]
+    fractionDic = dict()
+    infectedPerStDic = dict()
+    ttlFrac = 0
+
+    for ii in range(checkpoint):
+        fractionDic[ii] = results[ii][0] ###
+        infectedPerStDic[ii] = results[ii][1] ###
+        if fractionDic[ii] >= thr:
+            numEpidemics += 1
+            ttlEpidemicsSize += fractionDic[ii]
+            Epidemics.append(fractionDic[ii])
+            EpidemicsPerSt[0] += infectedPerStDic[ii][0]
+            EpidemicsPerSt[1] += infectedPerStDic[ii][1]
+
+        ttlFrac += fractionDic[ii]
+
+    if len(Epidemics) == 0:
+        Epidemics.append(0)
+
+    ######### Record the results for this Mean Degree ##########    
+    Prob_Emergence = (numEpidemics*1.0/(checkpoint))
+    AvgValidSize = (div(ttlEpidemicsSize*1.0, numEpidemics))
+    AvgSize = ttlFrac*1.0/checkpoint
+    StdValidSize = (np.std(Epidemics))
+    infSt1 = (div(EpidemicsPerSt[0],numEpidemics))
+    infSt2 = (div(EpidemicsPerSt[1],numEpidemics))
+    return Prob_Emergence, AvgValidSize, infSt1, infSt2
+
+def process_raw(raw, paras, thr,):
+    processed_res_strains = []
     for start_strain, results in raw.items():
+        processed_res = defaultdict(dict)
         for mean_degree, result in results.items():
-            Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2 = process_sim_res(result, paras, start_strain)
+            Prob_Emergence_list = []
+            AvgValidSize_list = []
+            infSt1_list = []
+            infSt2_list = []
+            
+            for cp, cp_res in result.items():
+                Prob_Emergence, AvgValidSize, infSt1, infSt2 = process_sim_res(cp_res, paras['cp'], thr=thr)
+                Prob_Emergence_list.append(Prob_Emergence)
+                AvgValidSize_list.append(AvgValidSize)
+                infSt1_list.append(infSt1)
+                infSt2_list.append(infSt2)
+                
+            processed_res['pe'][mean_degree] = np.array(Prob_Emergence_list).mean()
+            processed_res['es'][mean_degree] = np.array(AvgValidSize_list).mean()
+            processed_res['es0'][mean_degree] = np.array(infSt1_list).mean()
+            processed_res['es1'][mean_degree] = np.array(infSt2_list).mean()
+        
+        ordered_res = dict()
+        ordered_res['pe']  = get_ordered_values_by_key(processed_res['pe'])
+        ordered_res['es']  = get_ordered_values_by_key(processed_res['es'])
+        ordered_res['es0'] = get_ordered_values_by_key(processed_res['es0'])
+        ordered_res['es1'] = get_ordered_values_by_key(processed_res['es1'])
+        
+        processed_res_strains.append(ordered_res)
+    
+    return processed_res_strains
+        
+                
     
 def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', itemname='pe', change_metric='m', time_analysis=''):
     '''Load Analysis Results'''
