@@ -14,7 +14,7 @@ from scipy import optimize
 import multiprocessing, time
 from multiprocessing import Manager
 from collections import defaultdict
-import collections
+
 import sys, os
 sys.path.append(os.path.abspath("auxiliary_scripts/"))
 

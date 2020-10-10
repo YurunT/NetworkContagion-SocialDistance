@@ -1,5 +1,6 @@
 import sys, os
 from os import listdir
+import collections
 sys.path.append(os.path.abspath("."))
 from global_vars import *
 from output_module import *
@@ -20,6 +21,10 @@ def get_time(exp_time, path):
         exp_time = max(exp_times) # Get the latest results
         print(exp_time)
     return exp_time
+
+def get_ordered_values_by_key(ordered_dict):
+    ordered_values_list = list(collections.OrderedDict(sorted(ordered_dict.items())).values())
+    return ordered_values_list
     
 def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', itemname='pe', change_metric='m', time_analysis=''):
     '''Load Analysis Results'''
@@ -49,6 +54,6 @@ def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname
     paras_json = json_load(setting_path + "/paras.json")
     total = json_load(res_path + "/total.json",)
     withmask = json_load(res_path + "/withmask.json")
-    nomask = (res_path + "/nomask.json")
+    nomask = json_load(res_path + "/nomask.json")
     mean_degree_list = np.load(setting_path + '/mean_degree_list.npy')
-    return total, withmask, nomask, paras_json, mean_degree_list
+    return get_ordered_values_by_key(total), get_ordered_values_by_key(withmask), get_ordered_values_by_key(nomask), paras_json, mean_degree_list
