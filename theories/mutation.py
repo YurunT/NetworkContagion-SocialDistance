@@ -138,7 +138,7 @@ def cascade_size(lambda_r, Q_list, mu_list, max_degree, rho, infection_size_mu, 
 
 ########### Mutation Model PE Analysis -- Parellel ########### 
 
-def obtain_val_r_1(v1, v2, t1, u_r_11, u_r_12, mean_degree, max_degree):
+def obtain_val_r_1_pe(v1, v2, t1, u_r_11, u_r_12, mean_degree, max_degree):
     val = 0
 
     for d_r in range(0, max_degree):
@@ -147,7 +147,7 @@ def obtain_val_r_1(v1, v2, t1, u_r_11, u_r_12, mean_degree, max_degree):
 
     return val
 
-def obtain_val_r_2(v1, v2, t2, u_r_21, u_r_22, mean_degree, max_degree):
+def obtain_val_r_2_pe(v1, v2, t2, u_r_21, u_r_22, mean_degree, max_degree):
     val = 0
 
     for d_r in range(0, max_degree):
@@ -156,10 +156,10 @@ def obtain_val_r_2(v1, v2, t2, u_r_21, u_r_22, mean_degree, max_degree):
 
     return val
 
-def equations(p, mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,):
+def equations_pe(p, mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,):
     v1, v2 = p
-    val_r_1 = obtain_val_r_1(v1, v2, t_r_1, u_r_11, u_r_12, mean_degree, max_degree)
-    val_r_2 = obtain_val_r_2(v1, v2, t_r_2, u_r_21, u_r_22, mean_degree, max_degree)
+    val_r_1 = obtain_val_r_1_pe(v1, v2, t_r_1, u_r_11, u_r_12, mean_degree, max_degree)
+    val_r_2 = obtain_val_r_2_pe(v1, v2, t_r_2, u_r_21, u_r_22, mean_degree, max_degree)
 
     return (v1 - val_r_1, v2 - val_r_2)
 
@@ -167,7 +167,7 @@ def equations(p, mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_
 def cascade_prob(mean_degree, Q_list, mu_list, max_degree, pe_0_list, pe_1_list, pe_list):
     t_r_1, t_r_2, u_r_11, u_r_12, u_r_22, u_r_21 = get_t_mu(Q_list, mu_list) 
 
-    h_r_1, h_r_2 = fsolve(equations, (0.01, 0.01), args=(mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,), xtol=1e-6)
+    h_r_1, h_r_2 = fsolve(equations_pe, (0.01, 0.01), args=(mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,), xtol=1e-6)
 
     H_1 = 0
     for d_r in range(0, max_degree):

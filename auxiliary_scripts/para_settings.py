@@ -8,6 +8,9 @@ class para_setting():
         self.modelname = 'mask'
         self.itemname = 'es'
         self.change = 0
+        self.n = 50
+        self.e = 10
+        self.cp = 5
     
     def print_paras(self,):
         print("m:", self.m)
@@ -18,3 +21,6 @@ class para_setting():
         print("modelname:", self.modelname)
         print("itemname:", self.itemname)
         print("change:", self.change)
+        print("n:", self.n)
+        print("e:", self.e)
+        print("cp:", self.cp)

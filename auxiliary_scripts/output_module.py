@@ -40,9 +40,14 @@ def get_common_path(paras):
     change_folder = get_change_name(paras.change)
     common_path = paras.modelname + '/' + paras.itemname + '/' + change_folder + '/' + paras.msg + '/' + get_para_setting_str(paras) + '/'
     return common_path
-    
+
+def get_setting_path(paras, time_exp):
+    setting_path = base_path + 'simulation/' + get_common_path(paras) + 'n' + str(paras.n) + '_ttle' + str(paras.e) + '/' + time_exp + '/Settings/' 
+    print("Setting_path:", setting_path)
+    return setting_path
+
 def get_exp_path(paras, cp, mean_degree, time_exp, start_strain):
-    exp_path = base_path + 'simulation/' + get_common_path(paras) + 'n' + str(paras.n) + '_ttle' + str(paras.e) + '/' + time_exp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/e'+str(paras.cp) +'_cp' + str(cp)
+    exp_path = base_path + 'simulation/' + get_common_path(paras) + 'n' + str(paras.n) + '_ttle' + str(paras.e) + '/' + time_exp +'/ss'+ str(start_strain) + '/meandegree'+ str(mean_degree) +'/' +'cp' + str(cp)
     print("Experiment path:", exp_path)
     return exp_path
 
@@ -78,13 +83,13 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
     json_save(res_path + "/nomask.json",   infection_size1.copy())
     np.save(setting_path + '/mean_degree_list.npy', mean_degree_list)
     
-def process_sim_res(results, paras, start_strain):
-    Prob_Emergence = defaultdict(list)
-    AvgValidSize = defaultdict(list)
-    AvgSize = defaultdict(list)
-    StdValidSize = defaultdict(list)
-    infSt1 = defaultdict(list)
-    infSt2 = defaultdict(list)
+def process_sim_res(results, paras,):
+#     Prob_Emergence = 
+#     AvgValidSize = defaultdict(list)
+#     AvgSize = defaultdict(list)
+#     StdValidSize = defaultdict(list)
+#     infSt1 = defaultdict(list)
+#     infSt2 = defaultdict(list)
     
     ttlEpidemicsSize = 0
     numEpidemics_1 = 0
@@ -112,49 +117,40 @@ def process_sim_res(results, paras, start_strain):
         Epidemics.append(0)
 
     ######### Record the results for this Mean Degree ##########    
-    Prob_Emergence[start_strain].append(numEpidemics*1.0/(paras.cp))
-    AvgValidSize[start_strain].append(div(ttlEpidemicsSize*1.0, numEpidemics))
-    AvgSize[start_strain].append(ttlFrac*1.0/paras.cp)
-    StdValidSize[start_strain].append(np.std(Epidemics))
-    infSt1[start_strain].append(div(EpidemicsPerSt[0],numEpidemics))
-    infSt2[start_strain].append(div(EpidemicsPerSt[1],numEpidemics))
+    Prob_Emergence = (numEpidemics*1.0/(paras.cp))
+    AvgValidSize = (div(ttlEpidemicsSize*1.0, numEpidemics))
+    AvgSize = ttlFrac*1.0/paras.cp
+    StdValidSize = (np.std(Epidemics))
+    infSt1 = (div(EpidemicsPerSt[0],numEpidemics))
+    infSt2 = (div(EpidemicsPerSt[1],numEpidemics))
     
     return Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2
     
     
-def write_results(results, start_strain, mean_degree, cp, time_exp, mean_degree_list, T_list, start_time, paras,):
-    ''' Save the checkponint results for simulation.
+def write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,):
+    ''' Save the checkponint raw results for simulation.
         Analysis code are accelarated by Ray.
     '''
-    ######### Preprocess the raw results ##########
-    Prob_Emergence, AvgValidSize, AvgSize, StdValidSize, infSt1, infSt2 = process_sim_res(results, paras, start_strain)
-
     ######### Generate paths ########## 
-    ExpPath      = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
-    setting_path = ExpPath + '/' + 'Settings'
-    res_path     = ExpPath + '/' + 'Results'
-    
+    ExpPath = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
     generate_path(ExpPath)
-    generate_path(setting_path)
-    generate_path(res_path)
 
     ######### Save results ########## 
-    json_save(setting_path + '/paras.json', vars(paras))
-    json_save(res_path + '/results.json', results)
-    np.save(setting_path + '/mean_degree_list.npy', np.array(mean_degree_list)) 
-    np.save(setting_path + '/trans_dict_mu.npy', np.array(T_list)) 
-    np.save(res_path + '/Prob_Emergence.npy', np.array(Prob_Emergence[start_strain])) 
-    np.save(res_path + '/AvgValidSize.npy', np.array(AvgValidSize[start_strain])) 
-    np.save(res_path + '/StdValidSize.npy', np.array(StdValidSize[start_strain])) 
-    np.save(res_path + '/infSt1.npy', np.array(infSt1[start_strain])) 
-    np.save(res_path + '/infSt2.npy', np.array(infSt2[start_strain])) 
+    json_save(ExpPath + '/results.json', results)
     
+    ######### Time setting ########## 
     now_finish = datetime.now() # current date and time
     timeExp = now_finish.strftime("%m%d%H:%M")
     print("checkpoint %d Done! for exp %s" %(cp, timeExp))
     print("--- %.2s seconds ---" % (time.time() - start_time))
 
-
+def write_exp_settings(time_exp, paras, mean_degree_list,):
+    setting_path = get_setting_path(paras, time_exp)
+    generate_path(setting_path)
+    json_save(setting_path + 'paras.json', vars(paras))
+    np.save(setting_path + 'mean_degree_list.npy', np.array(mean_degree_list)) 
+    return 
+    
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, m):
     """
     Added by Yurun

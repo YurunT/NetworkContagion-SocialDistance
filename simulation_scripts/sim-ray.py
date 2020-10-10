@@ -135,12 +135,14 @@ def main():
 
     for start_strain in [1, 2]:
         for mean_degree in mean_degree_list:
-            for cp in range(1, int(paras.e/paras.cp) + 1): 
+            for cp in range(1, int(paras.e/paras.cp) + 1): # cp order
                 results_ids = []
                 for i in range(paras.cp):
                     results_ids.append(runExp.remote(i, mean_degree, paras.n, T_list, paras.m, start_strain,))  
                 results = ray.get(results_ids)
-                write_results(results, start_strain, mean_degree, cp, time_exp, mean_degree_list, T_list, start_time, paras,)
+                write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,)
+    
+    write_exp_settings(time_exp, paras, mean_degree_list,)
 
 
     now_finish = datetime.now() # current date and time

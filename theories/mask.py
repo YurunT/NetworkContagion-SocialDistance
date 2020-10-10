@@ -210,11 +210,11 @@ def PE_vec(mean_degree, is_intermediate,  T_list, m, E0, E1, max_degree):
     E1 = PE(1, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree)
     return np.array([E0, E1])
 
-def func_root(E, mean_degree, T_list, m, max_degree):
+def func_root_pe(E, mean_degree, T_list, m, max_degree):
     return PE_vec(mean_degree, True, T_list, m, E[0], E[1], max_degree) - np.array(E)
 
 def get_ProbEmergence(mean_degree, paras, k_max, T_list, pe_list_m, pe_0_list_m, pe_1_list_m, ):
-    E0, E1 = optimize.fsolve(func_root, (0.01, 0.01), args=(mean_degree, T_list, paras.m, k_max), xtol=1e-6)    
+    E0, E1 = optimize.fsolve(func_root_pe, (0.01, 0.01), args=(mean_degree, T_list, paras.m, k_max), xtol=1e-6)    
     E0, E1 = 1 - PE_vec(mean_degree, False,  T_list, paras.m, E0, E1, k_max)
     pe_list_m[mean_degree]   = paras.m * E0 + (1 - paras.m) * E1
     pe_0_list_m[mean_degree] = E0
