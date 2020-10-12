@@ -142,7 +142,7 @@ def main():
                 results = ray.get(results_ids)
                 write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,)
     
-    write_exp_settings(time_exp, paras,)
+    write_exp_settings(time_exp, paras, mean_degree_list)
 
 
     now_finish = datetime.now() # current date and time

@@ -56,7 +56,8 @@ def get_parasobj(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', 
 def load_sim_settings(paras, time_exp):
     setting_path = get_setting_path(paras, time_exp)
     paras_arg = json_load(setting_path + 'paras.json')
-    return paras_arg
+    mean_degree_list = np.load(setting_path + 'mean_degree_list.npy')
+    return paras_arg, mean_degree_list
 
 def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', change_metric='m', n=50, e=10, checkpoint=5, time_exp='',):
     '''Load Simulation Results'''
@@ -78,13 +79,14 @@ def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname=
     for start_strain in [1, 2]:
         for mean_degree in mean_degree_list:
             raw[start_strain][mean_degree] = dict()
-            for cp in range(1, int(paras.e/paras.cp) + 1): 
+            for cp in range(1, int(paras.e/paras.cp) + 1):
+                print("cp:", cp)
                 exp_path = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
                 raw[start_strain][mean_degree][cp] = json_load(exp_path + '/results.json') # results has paras.cp exp results
     
-    paras_arg = load_sim_settings(paras, time_exp)
+    paras_arg, mean_degree_list = load_sim_settings(paras, time_exp)
     
-    return raw, paras_arg
+    return raw, paras_arg, mean_degree_list
 
 def process_sim_res(results, checkpoint, thr):    
     ttlEpidemicsSize = 0

@@ -120,9 +120,9 @@ def main():
                 for i in range(paras.cp):
                     results_ids.append(runExp.remote(i, mean_degree, paras.n, T_list, paras.m))  
                 results = ray.get(results_ids)
-                write_results(results, start_strain, mean_degree, cp, time_exp, mean_degree_list, T_list, start_time, paras,)
+                write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,)
 
-
+    write_exp_settings(time_exp, paras, mean_degree_list)
     now_finish = datetime.now() # current date and time
     print("All Done! for:" + time_exp)
     print("--- %.2s seconds in total ---" % (time.time() - start_time))

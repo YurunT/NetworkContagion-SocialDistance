@@ -101,10 +101,11 @@ def write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start
     print("checkpoint %d Done! for exp %s" %(cp, timeExp))
     print("--- %.2s seconds ---" % (time.time() - start_time))
 
-def write_exp_settings(time_exp, paras,):
+def write_exp_settings(time_exp, paras, mean_degree_list):
     setting_path = get_setting_path(paras, time_exp)
     generate_path(setting_path)
     json_save(setting_path + 'paras.json', vars(paras))
+    np.save(setting_path + 'mean_degree_list.npy', np.array(mean_degree_list))
     return 
     
 def draw_figures(mean_degree_list, Prob_Emergence, AvgValidSize, AvgSize, ExpPath, m):

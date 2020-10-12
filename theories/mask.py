@@ -60,13 +60,15 @@ def P_A_given_B(i, k, T_list, A_0, A_1, m):
     return p_ab
 
 def P_A(i, mean_degree, nodeN, T_list, m, A_0, A_1, k_max):
-    P_k_dict, k_max = generate_degree_list(mean_degree, nodeN)
+#     P_k_dict, k_max0 = generate_degree_list(mean_degree, nodeN)
+    
     pa_L = 0
     for k in range(1, k_max):
-        if k not in P_k_dict.keys():
-            p_k = 0
-        else:
-            p_k = P_k_dict[k]
+#         if k not in P_k_dict.keys():
+#             p_k = 0
+#         else:
+#             p_k = P_k_dict[k]
+        p_k = poisson.pmf(k, mean_degree)
         p_b = k * p_k / mean_degree
         p_ab = P_A_given_B(i, k, T_list, A_0, A_1, m)
         pa_L += p_ab * p_b
