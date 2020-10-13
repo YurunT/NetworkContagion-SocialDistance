@@ -86,7 +86,11 @@ def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname=
     
     paras_arg, mean_degree_list = load_sim_settings(paras, time_exp)
     
-    return raw, paras_arg, mean_degree_list
+    res = dict()
+    res['raw'] = raw
+    res['paras'] = paras_arg
+    res['mdl'] = mean_degree_list
+    return res
 
 def process_sim_res(results, checkpoint, thr):    
     ttlEpidemicsSize = 0
@@ -179,4 +183,58 @@ def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname
     withmask = json_load(res_path + "/withmask.json")
     nomask = json_load(res_path + "/nomask.json")
     mean_degree_list = np.load(setting_path + '/mean_degree_list.npy')
-    return get_ordered_values_by_key(total), get_ordered_values_by_key(withmask), get_ordered_values_by_key(nomask), paras_json, mean_degree_list
+    
+    res = dict()
+    res['ttl'] = get_ordered_values_by_key(total)
+    res['mask'] = get_ordered_values_by_key(withmask)
+    res['nomask'] = get_ordered_values_by_key(nomask)
+    res['paras'] = paras_json
+    res['mdl'] = mean_degree_list
+    
+    return res
+
+
+##### Figrure function #####
+def get_range_str(mdl):
+    range_str = "[%.2f, %.2f]" %(mdl[0], mdl[-1])
+    return range_str
+
+def append_legend_list(legend_list, mdl, sim_or_analysis):
+    if sim_or_analysis == 'sim':
+        first_word = 'Sim'
+    elif sim_or_analysis == 'analysis':
+        first_word = 'Theory'
+    else:
+        assert False
+        
+    range_str = get_range_str(mdl)
+    
+    legend_list.append(first_word + "(mask) "   + range_str)
+    legend_list.append(first_word + "(nomask) " + range_str)
+    legend_list.append(first_word + "(total) "  + range_str)
+    
+def plot_anaylsis(res, ax, legend_list, marker='--'):
+#     fig, ax = plt.subplots(figsize=(10,7))
+    ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
+    ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
+    ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
+    append_legend_list(legend_list, res['mdl'], 'analysis')
+
+
+def plot_sim(res_list, paras, mdl, ax, legend_list, marker='+', ):
+    ax.plot(mdl, np.array(res_list[0]['pe']), 'g' + marker)
+    ax.plot(mdl, np.array(res_list[1]['pe']), 'b' + marker)
+    ax.plot(mdl, np.array(res_list[0]['pe']) * paras['m'] + np.array(res_list[1]['pe']) * (1 - paras['m']), 'r' + marker)
+    append_legend_list(legend_list, mdl, 'sim')
+    
+def scatter_sim(res_list, ax, paras, mdl, legend_list, marker='o', ):
+    ax.scatter(mdl, np.array(res_list[0]['pe']), marker=marker, facecolors='none', edgecolors='g')
+    ax.scatter(mdl, np.array(res_list[1]['pe']), marker=marker, facecolors='none', edgecolors='b')
+    ax.scatter(mdl, np.array(res_list[0]['pe']) * paras['m'] + np.array(res_list[1]['pe']) * (1 - paras['m']), 'r' + marker)
+    append_legend_list(legend_list, mdl, 'sim')
+    
+def set_ax(legend_list, x_label, y_label, title, ax):
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.legend(legend_list)
+    ax.set_title(title) 
