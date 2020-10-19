@@ -86,7 +86,7 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
     
 def write_cp_raw_results(results, start_strain, mean_degree, cp, time_exp, start_time, paras,):
     ''' Save the checkponint raw results for simulation.
-        Analysis code are accelarated by Ray.
+        Sim codes are accelarated by Ray.
     '''
     ######### Generate paths ########## 
     ExpPath = get_exp_path(paras, cp, mean_degree, time_exp, start_strain)
