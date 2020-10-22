@@ -1,6 +1,5 @@
 #!/bin/bash
 source activate ytian
-# for p_mask in  0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 
 for p_mask in 0.45
 do
 echo change m: $p_mask

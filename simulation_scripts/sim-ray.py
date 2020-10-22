@@ -144,7 +144,6 @@ def main():
     
     write_exp_settings(time_exp, paras, mean_degree_list)
 
-
     now_finish = datetime.now() # current date and time
     print("All Done! for:" + time_exp)
     print("--- %.2s seconds in total ---" % (time.time() - start_time))

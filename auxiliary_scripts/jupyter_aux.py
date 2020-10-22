@@ -34,7 +34,6 @@ def get_mdl(path):
     return mean_degrees
     
 def get_ordered_values_by_key(x):
-#     ordered_values_list = list(collections.OrderedDict(sorted(ordered_dict.items())).values())
     ordered_values_list = list({k: v for k, v in sorted(x.items(), key=lambda item: item[1])}.values())
     return ordered_values_list
 
@@ -157,7 +156,6 @@ def process_raw(raw, paras, thr,):
         ordered_res['es1'] = get_ordered_values_by_key(processed_res['es1'])
         
         processed_res_strains.append(ordered_res)
-    
     return processed_res_strains
         
                 
@@ -185,16 +183,12 @@ def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname
     nomask = json_load(res_path + "/nomask.json")
     mean_degree_list = np.load(setting_path + '/mean_degree_list.npy')
     
-    print("total from load_analysis_results:", total)
     res = dict()
     res['ttl'] = get_ordered_values_by_key(total)
     res['mask'] = get_ordered_values_by_key(withmask)
     res['nomask'] = get_ordered_values_by_key(nomask)
     res['paras'] = paras_json
-    res['mdl'] = mean_degree_list
-    
-    print("total after get_ordered_values_by_key:", res['ttl'])
-    
+    res['mdl'] = mean_degree_list 
     return res
 
 
@@ -218,14 +212,12 @@ def append_legend_list(legend_list, mdl, sim_or_analysis):
     legend_list.append(first_word + "(total) "  + range_str)
     
 def plot_pe_anaylsis(res, ax, legend_list, marker='--'):
-#     fig, ax = plt.subplots(figsize=(10,7))
     ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
     ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
     ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
     append_legend_list(legend_list, res['mdl'], 'analysis')
     
 def plot_anaylsis(res, ax, legend_list, marker='--'):
-#     fig, ax = plt.subplots(figsize=(10,7))
     ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
     ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
     ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
