@@ -60,11 +60,17 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
     ''' Save the results for anaysis.
         Analysis code are accelarated by parellel
     '''
+
     print("Analysis finished! Start wrting json...")
    
     infection_size0 = infection_size_list[0]
     infection_size1 = infection_size_list[1]
     infection_size = infection_size_list[2]
+    
+    print("from write_analysis_results's infection_size:", infection_size)
+
+    
+
 
     ######### Generate paths ########## 
     time_analysis = datetime.now().strftime("%m%d%H:%M")

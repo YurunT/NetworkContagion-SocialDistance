@@ -38,7 +38,7 @@ def resolve_paras(paras):
     num_cores = min(paras.nc,multiprocessing.cpu_count())
     rho = 1.0 / paras.n
 #     k_max = 4 * paras.maxd
-    k_max = 50
+    k_max = 20
     q_dict, mu_dict = generate_new_transmissibilities_mutation(paras.tm1, paras.tm2, paras.T, paras.m)
     T_list  = list(generate_new_transmissibilities_mask(paras.tm1, paras.tm2, paras.T, paras.m).values())
     Q_list  = list(q_dict.values())

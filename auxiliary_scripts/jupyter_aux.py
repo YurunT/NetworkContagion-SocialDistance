@@ -33,8 +33,9 @@ def get_mdl(path):
     mean_degrees = [separate_number_chars(f)[1] for f in listdir(path) if f != '.ipynb_checkpoints']
     return mean_degrees
     
-def get_ordered_values_by_key(ordered_dict):
-    ordered_values_list = list(collections.OrderedDict(sorted(ordered_dict.items())).values())
+def get_ordered_values_by_key(x):
+#     ordered_values_list = list(collections.OrderedDict(sorted(ordered_dict.items())).values())
+    ordered_values_list = list({k: v for k, v in sorted(x.items(), key=lambda item: item[1])}.values())
     return ordered_values_list
 
 def get_parasobj(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', itemname='es', change_metric='m', n=50, e=10, checkpoint='5'):
@@ -184,12 +185,15 @@ def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname
     nomask = json_load(res_path + "/nomask.json")
     mean_degree_list = np.load(setting_path + '/mean_degree_list.npy')
     
+    print("total from load_analysis_results:", total)
     res = dict()
     res['ttl'] = get_ordered_values_by_key(total)
     res['mask'] = get_ordered_values_by_key(withmask)
     res['nomask'] = get_ordered_values_by_key(nomask)
     res['paras'] = paras_json
     res['mdl'] = mean_degree_list
+    
+    print("total after get_ordered_values_by_key:", res['ttl'])
     
     return res
 
