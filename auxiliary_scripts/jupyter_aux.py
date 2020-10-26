@@ -37,7 +37,7 @@ def get_ordered_values_by_key(x):
     ordered_values_list = list({k: v for k, v in sorted(x.items(), key=lambda item: item[1])}.values())
     return ordered_values_list
 
-def get_parasobj(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname='mask', itemname='es', change_metric='m', n=50, e=10, checkpoint='5'):
+def get_parasobj(m=0.45, T=0.6, tm1=[0.3,1], tm2=[0.7,1], msg='test', modelname='mask', itemname='es', change_metric='m', n=50, e=10, checkpoint='5'):
     paras = para_setting()
     paras.m = m
     paras.T = T

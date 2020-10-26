@@ -4,10 +4,8 @@ from joblib import Parallel, delayed
 from datetime import datetime
 sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 sys.path.append(os.path.abspath("../theories"))
-from mask_pe import *
-from mutation_pe import *
-from mask_es import *
-from mutation_es import *
+from mask import *
+from mutation import *
 from input_module import *
 from output_module import write_analysis_results
 from main_aux import *
@@ -17,7 +15,11 @@ def main():
     paras = parse_args(sys.argv[1:])
     paras_check(paras)
     mean_degree_list = get_mean_degree_list(paras)
+    
+    print('-------Parameter Setting-------\n', vars(paras))
     print("mean_degree_list:", mean_degree_list)
+    print("num_cores:", paras.nc)
+    print('-------Parameter Setting-------\n')
     
     ###### Run on multiple cores using parellel ###### 
     infection_size = Manager().dict()

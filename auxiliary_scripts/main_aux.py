@@ -62,13 +62,7 @@ def resolve_paras(paras):
     if paras.modelname == 'mutation':
         q_dict, mu_dict = generate_new_transmissibilities_mutation(tmask_list, paras.T, paras.m)
         Q_list  = list(q_dict.values())
-        mu_list = list(mu_dict.values())
-    
-    print('-------Parameter Setting-------\n', vars(paras))
-    print("K_max: ", k_max)
-    print("num_cores:", num_cores)
-    print('-------Parameter Setting-------\n')
-    
+        mu_list = list(mu_dict.values())    
     if paras.modelname == 'mutation':
         return rho, k_max, T_list, Q_list, mu_list
     else:

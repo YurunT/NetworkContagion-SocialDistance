@@ -33,6 +33,7 @@ def json_save(file_name, file):
         json.dump(file, fp)
         
 def get_para_setting_str(paras):
+    print("From output module")
     para_setting_str = 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) 
     for idx in range(len(paras.tm1)):
         tmi1 = 'tm%d,1' %(idx + 1) + '_' + '{0:.2f}'.format(paras.tm1[idx]) 
@@ -72,12 +73,7 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
     infection_size0 = infection_size_list[0]
     infection_size1 = infection_size_list[1]
     infection_size = infection_size_list[2]
-    
-    print("from write_analysis_results's infection_size:", infection_size)
-
-    
-
-
+   
     ######### Generate paths ########## 
     time_analysis = datetime.now().strftime("%m%d%H:%M")
     analysis_path = get_analysis_path(paras, time_analysis,)

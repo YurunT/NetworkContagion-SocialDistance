@@ -2,8 +2,8 @@ class para_setting():
     def __init__(self,):
         self.m = 0.45
         self.T = 0.6
-        self.tm1 = 0.3
-        self.tm2 = 0.7
+        self.tm1 = [0.3, 1]
+        self.tm2 = [0.7, 1]
         self.msg = 'test'
         self.modelname = 'mask'
         self.itemname = 'es'
