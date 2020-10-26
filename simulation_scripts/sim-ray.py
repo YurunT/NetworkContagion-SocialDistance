@@ -38,15 +38,15 @@ def infected_rule(infected_neighbors_dict, T_list, susceptible_nodes, num_strain
             trial_list = infected_neighbors_dict[node] # All of his parents
             random.shuffle(trial_list)
             for neighbor in trial_list:
-                
+    
                 if neighbor == 0 and mask_status[node] == 0: # both wear a mask
-                    T = T_list[1]
+                    T = T_list[0][0]
                 elif neighbor == 0 and mask_status[node] == 1: # parent wears mask, node does not
-                    T = T_list[0]
+                    T = T_list[0][1]
                 elif neighbor == 1 and mask_status[node] == 0: # parent no mask, node mask
-                    T = T_list[3]
+                    T = T_list[1][0]
                 elif neighbor == 1 and mask_status[node] == 1: # parent no mask, node no mask
-                    T = T_list[2]
+                    T = T_list[1][1]
                 else:
                     print('Error in checking mask combinations')
                     assert(False)
@@ -125,7 +125,8 @@ def main():
     ########### Get commandline input ###########
     paras = parse_args(sys.argv[1:])
     paras_check(paras)
-    num_cores, rho, k_max, T_list, Q_list, mu_list, mean_degree_list = resolve_paras(paras)
+    mean_degree_list = get_mean_degree_list(paras)
+    k_max, T_list = resolve_paras(paras)
 
     ############ Start Exp ############
     now = datetime.now() # current date and time
