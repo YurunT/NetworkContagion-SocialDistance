@@ -8,6 +8,8 @@ from scipy.stats import poisson
 import scipy.optimize
 import scipy.misc
 from datetime import datetime
+sys.path.append(os.path.abspath("../auxiliary_scripts/"))
+from main_aux import *
 
 def get_t_mu(Q_list, mu_list):
     t1 = Q_list[0]
@@ -89,7 +91,8 @@ def equations(p, lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, r
 
     return (v1 - val_r_1, v2 - val_r_2) 
 
-def cascade_size(lambda_r, Q_list, mu_list, max_degree, rho, infection_size_mu, infection_size0_mu, infection_size1_mu):
+def cascade_size(lambda_r, paras, infection_size0_mu, infection_size1_mu, infection_size_mu):
+    rho, max_degree, T_list, Q_list, mu_list = resolve_paras(paras)
     t1, t2, u_r_11, u_r_12, u_r_22, u_r_21 = get_t_mu(Q_list, mu_list) 
     
     h_r_1, h_r_2 = fsolve(equations, (0.9, 0.9), args=(lambda_r, t1, t2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree, rho, ), xtol=1e-10)
@@ -164,7 +167,8 @@ def equations_pe(p, mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, m
     return (v1 - val_r_1, v2 - val_r_2)
 
 
-def cascade_prob(mean_degree, Q_list, mu_list, max_degree, pe_0_list, pe_1_list, pe_list):
+def cascade_prob(mean_degree, paras, pe_0_list, pe_1_list, pe_list):
+    rho, max_degree, T_list, Q_list, mu_list = resolve_paras(paras)
     t_r_1, t_r_2, u_r_11, u_r_12, u_r_22, u_r_21 = get_t_mu(Q_list, mu_list) 
 
     h_r_1, h_r_2 = fsolve(equations_pe, (0.01, 0.01), args=(mean_degree, t_r_1, t_r_2, u_r_11, u_r_12, u_r_21, u_r_22, max_degree,), xtol=1e-6)
