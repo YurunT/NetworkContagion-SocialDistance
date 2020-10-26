@@ -1,6 +1,13 @@
+def get_effeciency_list(paras):
+    return [[paras.tm1, paras.tm2],
+            [1, 1]]
+    
+
 def generate_new_transmissibilities_mask(effeciency_list, T,):
     '''
     Input:  
+            infectious - T ->|- T * inward_e -> |- T * inward_e * out_e -> susceptible
+            
             effeciency_list: List of (inward effeciency(notated as 1), outward effeciency(notated as 2))
             T: Orignial transmissibility of the virus
     Output: 
@@ -20,7 +27,6 @@ def generate_new_transmissibilities_mask(effeciency_list, T,):
 #     effeciency_list = [[T_mask1, T_mask2],
 #                        [1, 1]]
     typen = len(effeciency_list)
-    
     T_list = []
     for u in range(typen):
         u_row = []
