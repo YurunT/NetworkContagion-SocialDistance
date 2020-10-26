@@ -1,4 +1,11 @@
 def get_tmask_list(paras):
+    '''
+    Input:  paras.tm1:[tmi,1], paras.tm2:[tmi,2]
+    Output: tmask_list: [[tm1,1, tm1,2],
+                         [tm2,1, tm2,2],
+                         ...,
+                         [tmM,1, tmM,2]]
+    '''
     num_masks = len(paras.tm1)
     tmask_list = []
     for idx in range(num_masks):
@@ -13,12 +20,15 @@ def generate_new_transmissibilities_mask(tmask_list, T,):
     '''
     Input:  
             infectious - T ->|- T * inward_e -> |- T * inward_e * out_e -> susceptible
-            Tij = Tmaski,1 * Tmaskj,2 * T
+            ----- Tij = Tmaski,1 * Tmaskj,2 * T -----
             
             effeciency_list: List of (inward effeciency(notated as 1), outward effeciency(notated as 2))
             T: Orignial transmissibility of the virus
     Output: 
-            List of Tij(T_list)
+            List of Tij(T_list):[[T11, T12, ..., T1M],
+                                 [T21, T22, ..., T2M],
+                                 ...,
+                                 [TM1, TM2, ..., TMM]]
     '''
     typen = len(tmask_list)
     T_list = []
