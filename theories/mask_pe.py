@@ -8,6 +8,8 @@ from scipy.stats import poisson
 import scipy.optimize
 import scipy.misc
 from datetime import datetime
+sys.path.append(os.path.abspath("../auxiliary_scripts/"))
+from main_aux import *
 
 
 ########### Mask Model PE Analysis -- Parellel ########### 
@@ -39,10 +41,10 @@ def PE_B(i, is_intermediate, k, E0, E1, T_list, m):
     return res
 
 def PE_BN(i, is_intermediate, n, k, E0, E1, T_list, m):
-    T1 = T_list[0]
-    T2 = T_list[1]
-    T3 = T_list[2]
-    T4 = T_list[3]
+    T1 = T_list[0][1]
+    T2 = T_list[0][0]
+    T3 = T_list[1][1]
+    T4 = T_list[1][0]
     
     res = 0 
     
@@ -77,7 +79,8 @@ def PE_vec(mean_degree, is_intermediate,  T_list, m, E0, E1, max_degree):
 def func_root_pe(E, mean_degree, T_list, m, max_degree):
     return PE_vec(mean_degree, True, T_list, m, E[0], E[1], max_degree) - np.array(E)
 
-def get_ProbEmergence(mean_degree, paras, k_max, T_list, pe_list_m, pe_0_list_m, pe_1_list_m,):
+def get_ProbEmergence(mean_degree, paras, pe_0_list_m, pe_1_list_m, pe_list_m):
+    k_max, T_list = resolve_paras(paras)
     E0, E1 = optimize.fsolve(func_root_pe, (0.01, 0.01), args=(mean_degree, T_list, paras.m, k_max), xtol=1e-6)    
     E0, E1 = 1 - PE_vec(mean_degree, False,  T_list, paras.m, E0, E1, k_max)
     pe_list_m[mean_degree]   = paras.m * E0 + (1 - paras.m) * E1
