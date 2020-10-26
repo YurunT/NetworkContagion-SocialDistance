@@ -8,13 +8,16 @@ from scipy.stats import poisson
 import scipy.optimize
 import scipy.misc
 from datetime import datetime
+sys.path.append(os.path.abspath("../auxiliary_scripts/"))
+from main_aux import *
+
 
 ########### Mask Model ES Analysis -- Parellel ########### 
 def P_A_given_R(i, T_list, k0, k1):
-    one_minus_T1 = 1 - T_list[0]
-    one_minus_T2 = 1 - T_list[1]
-    one_minus_T3 = 1 - T_list[2]
-    one_minus_T4 = 1 - T_list[3]
+    one_minus_T1 = 1 - T_list[0][1]
+    one_minus_T2 = 1 - T_list[0][0]
+    one_minus_T3 = 1 - T_list[1][1]
+    one_minus_T4 = 1 - T_list[1][0]
     if i == 0:
         res = 1 - (one_minus_T2 ** k0) * (one_minus_T4 ** k1)
     else:
@@ -70,10 +73,12 @@ def func_fix(A, mean_degree, nodeN, T_list, m):
 def func_root(A, mean_degree, nodeN, T_list, m, k_max):
     return np.array(p_A_vec(mean_degree, nodeN, T_list, m, A[0], A[1], k_max)) - np.array(A)
 
-def get_EpidemicSize(mean_degree, k_max, T_list, paras, infection_size, infection_size0, infection_size1):
+def get_EpidemicSize(mean_degree, paras, infection_size0, infection_size1, infection_size):
     '''
     S
-    '''
+    '''    
+    k_max, T_list = resolve_paras(paras)
+    
     init_A = (0.9, 0.9)
     m = paras.m
 

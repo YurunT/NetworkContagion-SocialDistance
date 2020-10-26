@@ -33,7 +33,13 @@ def json_save(file_name, file):
         json.dump(file, fp)
         
 def get_para_setting_str(paras):
-    para_setting_str = 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) + '_tm1_' + "{0:.2f}".format(paras.tm1) + '_tm2_' + "{0:.2f}".format(paras.tm2)
+    para_setting_str = 'm' + str(paras.m) + '_T' + "{0:.2f}".format(paras.T) 
+    for idx in range(len(paras.tm1)):
+        tmi1 = 'tm%d,1' %(idx + 1) + '_' + '{0:.2f}'.format(paras.tm1[idx]) 
+        tmi2 = 'tm%d,2' %(idx + 1) + '_' + '{0:.2f}'.format(paras.tm2[idx])
+        para_setting_str += tmi1
+        para_setting_str += '_'
+        para_setting_str += tmi2
     return para_setting_str
 
 def get_common_path(paras):
