@@ -27,11 +27,6 @@ def main():
     for i in range(num_mask_types):
         infection_sizes[i] = Manager().dict()  
     infection_sizes['ttl'] = Manager().dict()
-    
-#     infection_size = Manager().dict()
-#     infection_size0 = Manager().dict()
-#     infection_size1 = Manager().dict()
-    
 
     if paras.modelname   == 'mask'     and paras.itemname == 'es':
         Parallel(n_jobs  = paras.nc)(delayed(get_EpidemicSize)(mean_degree, paras, infection_sizes) for mean_degree in mean_degree_list)
@@ -39,8 +34,8 @@ def main():
 #     elif paras.modelname == 'mutation' and paras.itemname == 'es':
 #         Parallel(n_jobs  = paras.nc)(delayed(cascade_size)(mean_degree, paras, infection_size0, infection_size1, infection_size) for mean_degree in mean_degree_list)
         
-#     elif paras.modelname == 'mask'     and paras.itemname == 'pe':
-#         Parallel(n_jobs  = paras.nc)(delayed(get_ProbEmergence)(mean_degree, paras, infection_size0, infection_size1, infection_size) for mean_degree in mean_degree_list)
+    elif paras.modelname == 'mask'     and paras.itemname == 'pe':
+        Parallel(n_jobs  = paras.nc)(delayed(get_ProbEmergence)(mean_degree, paras, infection_sizes) for mean_degree in mean_degree_list)
         
 #     elif paras.modelname == 'mutation' and paras.itemname == 'pe':
 #         Parallel(n_jobs  = paras.nc)(delayed(cascade_prob)(mean_degree, paras, infection_size0, infection_size1, infection_size) for mean_degree in mean_degree_list)
