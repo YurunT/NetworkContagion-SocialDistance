@@ -59,8 +59,8 @@ def P_A_given_B(i, is_intermediate, k, T_list, A_0, A_1, m):
     for n in range(n_range):
         p_abn = P_A_given_B_N(i, is_intermediate, k, n, T_list, A_0, A_1)
         p_ab += p_abn * comb(n_range - 1, n) * \
-                (m ** n) * \
-                ((1 - m) ** (n_range - 1 - n))
+                (m[0] ** n) * \
+                (m[1] ** (n_range - 1 - n))
     return p_ab
 
 def P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max):    
@@ -101,7 +101,8 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     A_root = optimize.fsolve(func_root, init_A, args=(mean_degree, T_list, m, k_max, num_mask_types))
     print()
     P_A_list = pA_vec(mean_degree, False,  T_list, paras.m, A_root, k_max, num_mask_types)
-    A = P_A_list[0] * paras.m + P_A_list[1] * (1 - paras.m)
+#     A = P_A_list[0] * paras.m + P_A_list[1] * (1 - paras.m)
+    A = np.dot(P_A_list, m)
     print(mean_degree, P_A_list,)
     infection_size0[mean_degree] = P_A_list[0]
     infection_size1[mean_degree] = P_A_list[1]

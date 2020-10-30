@@ -31,12 +31,12 @@ def paras_check(paras):
         print("Please specify correct num of in/out-ward effeciencies!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
-#     if len(paras.m) + 1 != len(paras.tm2):
-#         print("------------ CMD INPUT INVALID ------------")
-#         print("Error: len(m) should equals len(tm) - 1!")
-#         print("Please check m list!")
-#         print("------------ CMD INPUT INVALID ------------")
-#         assert False
+    if sum(paras.m) != 1:
+        print("------------ CMD INPUT INVALID ------------")
+        print("Error: sum(m) should equals 1!")
+        print("Please check m list!")
+        print("------------ CMD INPUT INVALID ------------")
+        assert False
     if paras.modelname not in model_names:
         print("------------ CMD INPUT INVALID ------------")
         print("Error: NO model named %s!" %paras.modelname)
