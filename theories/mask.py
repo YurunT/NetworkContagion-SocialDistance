@@ -89,9 +89,9 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     '''
     S
     '''    
-    infection_size0 = infection_sizes[0]
-    infection_size1 = infection_sizes[1]
-    infection_size  = infection_sizes['ttl']
+#     infection_size0 = infection_sizes[0]
+#     infection_size1 = infection_sizes[1]
+#     infection_size  = infection_sizes['ttl']
     
     k_max, T_list = resolve_paras(paras)
     num_mask_types = len(T_list)
@@ -104,10 +104,13 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
 #     A = P_A_list[0] * paras.m + P_A_list[1] * (1 - paras.m)
     A = np.dot(P_A_list, m)
     print(mean_degree, P_A_list,)
-    infection_size0[mean_degree] = P_A_list[0]
-    infection_size1[mean_degree] = P_A_list[1]
-    infection_size[mean_degree]  = A
-    return P_A_list[0], P_A_list[1], A
+#     infection_size0[mean_degree] = P_A_list[0]
+#     infection_size1[mean_degree] = P_A_list[1]
+#     infection_size[mean_degree]  = A
+    for i in range(num_mask_types):
+        infection_sizes[i][mean_degree] = P_A_list[i]
+    infection_sizes['ttl'][mean_degree] = A
+    return P_A_list, A
 
 ########### Mask Model PE Analysis -- Parellel ########### 
 def PE(i, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree):
