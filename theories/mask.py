@@ -125,7 +125,7 @@ def PE(i, is_intermediate, E0, E1, T_list, m, mean_degree, max_degree):
 
 def PE_B(i, is_intermediate, k, E0, E1, T_list, m):
     res = 0
-    one_minus_m = 1 - m
+#     one_minus_m = 1 - m
     
     if is_intermediate: # intermediate q, powers sum up to k - 1
         n_range = k
@@ -134,7 +134,7 @@ def PE_B(i, is_intermediate, k, E0, E1, T_list, m):
         
     for n in range(n_range):
         pe_bn = PE_BN(i, is_intermediate, n, k, E0, E1, T_list, m)
-        res += pe_bn * comb(n_range - 1, n) * (m ** n) * (one_minus_m ** (n_range - 1 - n))
+        res += pe_bn * comb(n_range - 1, n) * (m[0] ** n) * (m[1] ** (n_range - 1 - n))
     return res
 
 def PE_BN(i, is_intermediate, n, k, E0, E1, T_list, m):
@@ -180,7 +180,9 @@ def get_ProbEmergence(mean_degree, paras, pes):
     k_max, T_list = resolve_paras(paras)
     E0, E1 = optimize.fsolve(func_root_pe, (0.01, 0.01), args=(mean_degree, T_list, paras.m, k_max), xtol=1e-6)    
     E0, E1 = 1 - PE_vec(mean_degree, False,  T_list, paras.m, E0, E1, k_max)
-    pes['ttl'][mean_degree]   = paras.m * E0 + (1 - paras.m) * E1
+    E_list = [E0, E1]
+#     pes['ttl'][mean_degree]   = paras.m * E0 + (1 - paras.m) * E1
+    pes['ttl'][mean_degree]   = np.dot(E_list, paras.m)
     pes[0][mean_degree] = E0
     pes[1][mean_degree] = E1
     print(mean_degree, E0, E1)
