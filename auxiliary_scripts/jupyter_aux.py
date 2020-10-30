@@ -178,18 +178,19 @@ def load_analysis_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname
     
     # Load results
     paras_json = json_load(setting_path + "/paras.json")
-    total = json_load(res_path + "/total.json",)
-    withmask = json_load(res_path + "/withmask.json")
-    nomask = json_load(res_path + "/nomask.json")
+    infection_res = json_load(res_path + "/infection_res.json")
+#     total = json_load(res_path + "/total.json",)
+#     withmask = json_load(res_path + "/withmask.json")
+#     nomask = json_load(res_path + "/nomask.json")
     mean_degree_list = np.load(setting_path + '/mean_degree_list.npy')
     
-    res = dict()
-    res['ttl'] = get_ordered_values_by_key(total)
-    res['mask'] = get_ordered_values_by_key(withmask)
-    res['nomask'] = get_ordered_values_by_key(nomask)
-    res['paras'] = paras_json
-    res['mdl'] = mean_degree_list 
-    return res
+
+#     res['ttl'] = get_ordered_values_by_key(total)
+#     res['mask'] = get_ordered_values_by_key(withmask)
+#     res['nomask'] = get_ordered_values_by_key(nomask)
+    infection_res['paras'] = paras_json
+    infection_res['mdl'] = mean_degree_list 
+    return infection_res
 
 
 ##### Figrure function #####

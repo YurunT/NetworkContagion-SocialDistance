@@ -8,6 +8,7 @@ import time
 import sys, os
 sys.path.append(os.path.abspath("."))
 from global_vars import *
+from jupyter_aux import *
 
 def div(x, y):
     if y == 0:
@@ -62,17 +63,23 @@ def get_analysis_path(paras, time_analysis,):
     analysis_path = base_path + 'analysis/'   + get_common_path(paras) + time_analysis
     print("Analysis path:", analysis_path)
     return analysis_path
+
+def get_jsonable_dict(unjsonable_dict):
+    jsonable_infection_size = dict()
+    for k, v in unjsonable_dict.items():
+        jsonable_infection_size[k] = get_ordered_values_by_key(v.copy())
+    return jsonable_infection_size
     
-def write_analysis_results(paras, infection_size_list, mean_degree_list):
+def write_analysis_results(paras, infection_size, mean_degree_list):
     ''' Save the results for anaysis.
         Analysis code are accelarated by parellel
     '''
 
     print("Analysis finished! Start wrting json...")
    
-    infection_size0 = infection_size_list[0]
-    infection_size1 = infection_size_list[1]
-    infection_size = infection_size_list[2]
+#     infection_size0 = infection_size_list[0]
+#     infection_size1 = infection_size_list[1]
+#     infection_size = infection_size_list[2]
    
     ######### Generate paths ########## 
     time_analysis = datetime.now().strftime("%m%d%H:%M")
@@ -86,9 +93,12 @@ def write_analysis_results(paras, infection_size_list, mean_degree_list):
 
     ######### Save results ########## 
     json_save(setting_path + "/paras.json",vars(paras))
-    json_save(res_path + "/total.json",    infection_size.copy())
-    json_save(res_path + "/withmask.json", infection_size0.copy())
-    json_save(res_path + "/nomask.json",   infection_size1.copy())
+    
+    infection_res = get_jsonable_dict(infection_size)
+        
+    json_save(res_path + "/infection_res.json", infection_res)
+#     json_save(res_path + "/withmask.json", infection_size0.copy())
+#     json_save(res_path + "/nomask.json",   infection_size1.copy())
     np.save(setting_path + '/mean_degree_list.npy', mean_degree_list)
     
     
