@@ -30,12 +30,13 @@ def main():
 
     if paras.modelname   == 'mask'     and paras.itemname == 'es':
         Parallel(n_jobs  = paras.nc)(delayed(get_EpidemicSize)(mean_degree, paras, infection_sizes) for mean_degree in mean_degree_list)
+    elif paras.modelname == 'mask'     and paras.itemname == 'pe':
+        Parallel(n_jobs  = paras.nc)(delayed(get_ProbEmergence)(mean_degree, paras, infection_sizes) for mean_degree in mean_degree_list)
         
 #     elif paras.modelname == 'mutation' and paras.itemname == 'es':
 #         Parallel(n_jobs  = paras.nc)(delayed(cascade_size)(mean_degree, paras, infection_size0, infection_size1, infection_size) for mean_degree in mean_degree_list)
         
-    elif paras.modelname == 'mask'     and paras.itemname == 'pe':
-        Parallel(n_jobs  = paras.nc)(delayed(get_ProbEmergence)(mean_degree, paras, infection_sizes) for mean_degree in mean_degree_list)
+
         
 #     elif paras.modelname == 'mutation' and paras.itemname == 'pe':
 #         Parallel(n_jobs  = paras.nc)(delayed(cascade_prob)(mean_degree, paras, infection_size0, infection_size1, infection_size) for mean_degree in mean_degree_list)

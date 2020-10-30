@@ -204,16 +204,18 @@ def append_legend_list(legend_list, mdl, sim_or_analysis):
     legend_list.append(first_word + "(nomask) " + range_str)
     legend_list.append(first_word + "(total) "  + range_str)
     
-def plot_pe_anaylsis(res, ax, legend_list, marker='--'):
-    ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
-    ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
-    ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
-    append_legend_list(legend_list, res['mdl'], 'analysis')
+# def plot_pe_anaylsis(res, ax, legend_list, marker='--'):
+#     ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
+#     ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
+#     ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
+#     append_legend_list(legend_list, res['mdl'], 'analysis')
     
 def plot_anaylsis(res, ax, legend_list, marker='--'):
-    ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
-    ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
-    ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
+
+    ax.plot(res['mdl'], np.array(res['0']), 'g' + marker)
+    ax.plot(res['mdl'], np.array(res['1']), 'b' + marker)
+    ax.plot(res['mdl'], np.array(res['ttl']) ,  'r'+ marker )
+#     ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
     append_legend_list(legend_list, res['mdl'], 'analysis')
 
 
