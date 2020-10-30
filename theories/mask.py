@@ -101,57 +101,6 @@ def get_EpidemicSize(mean_degree, paras, infection_size0, infection_size1, infec
     infection_size0[mean_degree] = A0
     infection_size1[mean_degree] = A1
     infection_size[mean_degree]  = A
-    
-    
-    
-#     for k in range(0, k_max): # k now can start from 0, because for the last level the k could be 0 [0, kmax)
-#         p_k = poisson.pmf(k, mean_degree) 
-#         p_ab_0 = 0
-#         p_ab_1 = 0
-        
-#         for n in range(k + 1): # n can be k
-       
-#             p_abn_0 = 0
-#             p_abn_1 = 0
-            
-#             for k0 in range(n + 1): # [0, n] 
-#                 for k1 in range(k - n + 1): # k1 can reach k - n
-#                     p_a_given_r_0 = P_A_given_R(0, T_list, k0, k1)
-#                     p_a_given_r_1 = P_A_given_R(1, T_list, k0, k1)
-                    
-#                     p_abn_0 += p_a_given_r_0 * \
-#                              comb(n, k0) * \
-#                              comb(k - n, k1) * \
-#                              (A_0_1_root[0] ** k0) * \
-#                              (A_0_1_root[1] ** k1) * \
-#                              ((1 - A_0_1_root[0]) ** (n - k0)) * \
-#                              ((1 - A_0_1_root[1]) ** (k - n - k1))
-                    
-#                     p_abn_1 += p_a_given_r_1 * \
-#                              comb(n, k0) * \
-#                              comb(k - n, k1) * \
-#                              (A_0_1_root[0] ** k0) * \
-#                              (A_0_1_root[1] ** k1) * \
-#                              ((1 - A_0_1_root[0]) ** (n - k0)) * \
-#                              ((1 - A_0_1_root[1]) ** (k - n - k1))
-                    
-#             p_ab_0 += p_abn_0 * comb(k, n) * \
-#                     (m ** n) * \
-#                     ((1 - m) ** (k - n))
-#             p_ab_1 += p_abn_1 * comb(k, n) * \
-#                     (m ** n) * \
-#                     ((1 - m) ** (k - n))
-            
-            
-#         pa_L_0 += p_k * p_ab_0
-#         pa_L_1 += p_k * p_ab_1
-#         pa_L += p_k * (m * p_ab_0 + (1 - m) * p_ab_1) 
-    
-#     print(mean_degree, pa_L, pa_L_0, pa_L_1)
-#     infection_size0[mean_degree] = pa_L_0
-#     infection_size1[mean_degree] = pa_L_1
-#     infection_size[mean_degree]  = pa_L
-    
     return A0, A1, A
 
 ########### Mask Model PE Analysis -- Parellel ########### 
