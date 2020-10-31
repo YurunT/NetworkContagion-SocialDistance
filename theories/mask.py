@@ -10,9 +10,7 @@ import scipy.misc
 from datetime import datetime
 sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 from main_aux import *
-from scipy.special import gammaln
-
-
+from theory_aux import * 
 
 ########### Mask Model ES Analysis -- Parellel ########### 
 def P_A_given_R(i, T_list, k0, k1):
@@ -53,21 +51,7 @@ def P_A_given_B_N(i, is_intermediate, k, n, T_list, A):
                      (one_minus_A1 ** (k1_range - 1 - k1))
     return p_abn
 
-def log_factorial(x):
-    """Returns the logarithm of x!
-    Also accepts lists and NumPy arrays in place of x."""
-    return gammaln(np.array(x)+1)
 
-def get_log_multinomial_coeffecient(N_vec):
-    '''
-    N_vec = (x1, x2, ..., xk)
-    sum(N_vec) = n
-    return n!/(x1!*x2!*...*xk!)
-    '''
-    n_range = sum(N_vec) # should be n_range - 1
-#     print('sum(N_vec)', n_range)
-    result = log_factorial(n_range) - sum(log_factorial(N_vec)) 
-    return result
 
 def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N,):
     '''

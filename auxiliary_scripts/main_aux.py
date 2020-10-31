@@ -4,13 +4,6 @@ import numpy as np
 sys.path.append(os.path.abspath("."))
 from tnn import *
 from global_vars import *
-
-def div(nu, de):
-    if de == 0:
-        res = 0
-    else:
-        res = nu * 1.0 / de
-    return res
     
 def get_mean_degree_list(paras):
     if paras.mdl is not None: 
