@@ -10,6 +10,8 @@ import scipy.misc
 from datetime import datetime
 sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 from main_aux import *
+from scipy.special import gammaln
+
 
 
 ########### Mask Model ES Analysis -- Parellel ########### 
@@ -26,11 +28,13 @@ def P_A_given_R(i, T_list, k0, k1):
     assert res <= 1, "P_A_given_R should be less than 1"
     return res
 
-def P_A_given_B_N(i, is_intermediate, k, n, T_list, A_0, A_1):
-    one_minus_A0 = 1 - A_0
-    one_minus_A1 = 1 - A_1
+def P_A_given_B_N(i, is_intermediate, k, n, T_list, A):
+    one_minus_A0 = 1 - A[0]
+    one_minus_A1 = 1 - A[1]
     
     p_abn = 0
+    
+    n = int(n[0])
     
     if is_intermediate:
         k1_range = k - n
@@ -43,42 +47,80 @@ def P_A_given_B_N(i, is_intermediate, k, n, T_list, A_0, A_1):
             p_abn += p_a_given_r * \
                      comb(n, k0) * \
                      comb(k1_range - 1, k1) * \
-                     (A_0 ** k0) * \
-                     (A_1 ** k1) * \
+                     (A[0] ** k0) * \
+                     (A[1] ** k1) * \
                      (one_minus_A0 ** (n - k0)) * \
                      (one_minus_A1 ** (k1_range - 1 - k1))
     return p_abn
 
-def P_A_given_B(i, is_intermediate, k, T_list, A_0, A_1, m):
+def log_factorial(x):
+    """Returns the logarithm of x!
+    Also accepts lists and NumPy arrays in place of x."""
+    return gammaln(np.array(x)+1)
+
+def get_log_multinomial_coeffecient(N_vec):
+    '''
+    N_vec = (x1, x2, ..., xk)
+    sum(N_vec) = n
+    return n!/(x1!*x2!*...*xk!)
+    '''
+    n_range = sum(N_vec) # should be n_range - 1
+#     print('sum(N_vec)', n_range)
+    result = log_factorial(n_range) - sum(log_factorial(N_vec)) 
+    return result
+
+def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N,):
+    '''
+    Input:  end: The last index of vec N, end = M - 1. M refers to the M in the derivation notebook.
+            idx: Loop over all the possible values for N_idx in vector N, 0 <= idx <= end (M - 1)
+            m  : List of mask type possibibities.
+            n_i_range: Biggest value for N_m to have
+    '''
+    pab = 0
+    if idx < end: # not the last ele in the N vec
+        for n_i in range(n_i_range):
+            vec_N[idx] = n_i
+            pab += (m[idx] ** n_i) * get_p_ab(i, is_intermediate, k, T_list, A, end, idx + 1, m, n_i_range - n_i, vec_N,)
+        return pab
+    else:
+        n_end = n_i_range - 1
+        vec_N[idx] = n_end
+        pab = (m[idx] ** n_end)   
+        multinomial_coeffecient = np.exp(get_log_multinomial_coeffecient(vec_N))
+        p_abn = P_A_given_B_N(i, is_intermediate, k, vec_N, T_list, A)
+        pab *= (multinomial_coeffecient * p_abn)
+        return pab
+
+
+def P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types):
     p_ab = 0
     if is_intermediate:
         n_range = k
     else:
         n_range = k + 1
-
-    for n in range(n_range):
-        p_abn = P_A_given_B_N(i, is_intermediate, k, n, T_list, A_0, A_1)
-        p_ab += p_abn * comb(n_range - 1, n) * \
-                (m[0] ** n) * \
-                (m[1] ** (n_range - 1 - n))
+    
+    vec_N = np.zeros(num_mask_types) # N = (N1, N2, ..., NM) [N_0, ..., N_M-1] [0, 0]
+    p_ab = get_p_ab(i, is_intermediate, k, T_list, A, num_mask_types - 1, 0, m, n_range, vec_N,) 
     return p_ab
 
-def P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max):    
+def P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types):    
     pa_L = 0
     for k in range(1, k_max):
+        
         prob_r = poisson.pmf(k, mean_degree)
         if is_intermediate: # intermediate q using excess degree distribution
-            pb = prob_r * k * 1.0 / mean_degree 
+#             pb = prob_r * k * 1.0 / mean_degree 
+            pb = div(prob_r * k, mean_degree)
         else:
             pb = prob_r
-        p_ab = P_A_given_B(i, is_intermediate, k, T_list, A[0], A[1], m)
+        p_ab = P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types)
         pa_L += p_ab * pb
     return pa_L
 
 def pA_vec(mean_degree, is_intermediate, T_list, m, A, k_max, num_mask_types):
     P_A_list = []
     for i in range(num_mask_types):
-        P_A_list.append(P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max))
+        P_A_list.append(P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types))
     return P_A_list
 
 
