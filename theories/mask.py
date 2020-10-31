@@ -13,60 +13,36 @@ from main_aux import *
 from theory_aux import * 
 
 ########### Mask Model ES Analysis -- Parellel ########### 
-def P_A_given_R(i, T_list, vec_I):
-    one_minus_T1 = 1 - T_list[0][1]
-    one_minus_T2 = 1 - T_list[0][0]
-    one_minus_T3 = 1 - T_list[1][1]
-    one_minus_T4 = 1 - T_list[1][0]
-    k0 = vec_I[0]
-    k1 = vec_I[1]
-    if i == 0:
-        res = 1 - (one_minus_T2 ** k0) * (one_minus_T4 ** k1)
+def get_par(i, T_list, end, idx, vec_I):
+    mid_res = 1
+    if idx <= end:
+        mid_res *= (1 - T_list[idx][i]) ** vec_I[idx] * get_par(i, T_list, end, idx + 1, vec_I)
+        return mid_res
     else:
-        res = 1 - (one_minus_T1 ** k0) * (one_minus_T3 ** k1)
-    assert res >= 0, "P_A_given_R should be greater than 0"
-    assert res <= 1, "P_A_given_R should be less than 1"
-    return res
+        return 1
+    
+def P_A_given_R(i, T_list, vec_I, end):    
+    return 1 - get_par(i, T_list, end, 0, vec_I)
 
 def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
     one_minus_A = 1 - np.array(A)
     p_abn = 0
-    
     vec_N = vec_N.astype(int)
-#     print("vec_N", vec_N)
+    
     if idx <= end:
         for ki in range(vec_N[idx] + 1):
-#             print("ki:",ki)
-#             print('vec_N[idx]', vec_N[idx])
             vec_I[idx] = ki
             p_abn += comb(vec_N[idx], ki) * (A[idx] ** ki) * (one_minus_A[idx] ** (vec_N[idx] - ki)) * get_p_abn(i, T_list, A, end, idx + 1, vec_N, vec_I,)
         return p_abn
     else:
-#         print("vec_I", vec_I)
-        p_a_given_r = P_A_given_R(i, T_list, vec_I)
+        p_a_given_r = P_A_given_R(i, T_list, vec_I, end)
+        
         return p_a_given_r
-            
-    
-    
 
 def P_A_given_B_N(i, k, vec_N, T_list, A, num_mask_types,):
     vec_I = np.zeros(num_mask_types)
     p_abn = get_p_abn(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
-    
-    
-#     for k0 in range(k0_range):
-#         for k1 in range(k1_range):
-#             p_a_given_r = P_A_given_R(i, T_list, k0, k1)
-#             p_abn += p_a_given_r * \
-#                      comb(k0_range - 1, k0) * \
-#                      comb(k1_range - 1, k1) * \
-#                      (A[0] ** k0) * \
-#                      (A[1] ** k1) * \
-#                      (one_minus_A0 ** (k0_range - 1 - k0)) * \
-#                      (one_minus_A1 ** (k1_range - 1 - k1))
     return p_abn
-
-
 
 def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N, num_mask_types):
     '''
