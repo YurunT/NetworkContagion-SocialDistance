@@ -26,28 +26,27 @@ def P_A_given_R(i, T_list, k0, k1):
     assert res <= 1, "P_A_given_R should be less than 1"
     return res
 
-def P_A_given_B_N(i, is_intermediate, k, n, T_list, A):
+def P_A_given_B_N(i, k, n, T_list, A):
     one_minus_A0 = 1 - A[0]
     one_minus_A1 = 1 - A[1]
     
     p_abn = 0
     
-    n = int(n[0])
+#     n = int(n[0])
     
-    if is_intermediate:
-        k1_range = k - n
-    else:
-        k1_range = k + 1 - n
+    k0_range = int(n[0]) + 1
+    k1_range = int(n[1]) + 1
     
-    for k0 in range(n + 1):
+    
+    for k0 in range(k0_range):
         for k1 in range(k1_range):
             p_a_given_r = P_A_given_R(i, T_list, k0, k1)
             p_abn += p_a_given_r * \
-                     comb(n, k0) * \
+                     comb(k0_range - 1, k0) * \
                      comb(k1_range - 1, k1) * \
                      (A[0] ** k0) * \
                      (A[1] ** k1) * \
-                     (one_minus_A0 ** (n - k0)) * \
+                     (one_minus_A0 ** (k0_range - 1 - k0)) * \
                      (one_minus_A1 ** (k1_range - 1 - k1))
     return p_abn
 
@@ -71,7 +70,7 @@ def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N,):
         vec_N[idx] = n_end
         pab = (m[idx] ** n_end)   
         multinomial_coeffecient = np.exp(get_log_multinomial_coeffecient(vec_N))
-        p_abn = P_A_given_B_N(i, is_intermediate, k, vec_N, T_list, A)
+        p_abn = P_A_given_B_N(i, k, vec_N, T_list, A)
         pab *= (multinomial_coeffecient * p_abn)
         return pab
 
@@ -93,7 +92,6 @@ def P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types):
         
         prob_r = poisson.pmf(k, mean_degree)
         if is_intermediate: # intermediate q using excess degree distribution
-#             pb = prob_r * k * 1.0 / mean_degree 
             pb = div(prob_r * k, mean_degree)
         else:
             pb = prob_r
