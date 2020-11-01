@@ -77,10 +77,6 @@ def write_analysis_results(paras, infection_size, mean_degree_list):
 
     print("Analysis finished! Start wrting json...")
    
-#     infection_size0 = infection_size_list[0]
-#     infection_size1 = infection_size_list[1]
-#     infection_size = infection_size_list[2]
-   
     ######### Generate paths ########## 
     time_analysis = datetime.now().strftime("%m%d%H:%M")
     analysis_path = get_analysis_path(paras, time_analysis,)
@@ -93,12 +89,8 @@ def write_analysis_results(paras, infection_size, mean_degree_list):
 
     ######### Save results ########## 
     json_save(setting_path + "/paras.json",vars(paras))
-    
     infection_res = get_jsonable_dict(infection_size)
-        
     json_save(res_path + "/infection_res.json", infection_res)
-#     json_save(res_path + "/withmask.json", infection_size0.copy())
-#     json_save(res_path + "/nomask.json",   infection_size1.copy())
     np.save(setting_path + '/mean_degree_list.npy', mean_degree_list)
     
     
