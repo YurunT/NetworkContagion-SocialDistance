@@ -76,7 +76,7 @@ def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname=
     mean_degree_list = get_mdl(mdl_path)
     
     raw = defaultdict(dict)
-    for start_strain in [1, 2]:
+    for start_strain in range(len(tm1)):
         for mean_degree in mean_degree_list:
             raw[start_strain][mean_degree] = dict()
             for cp in range(1, int(paras.e/paras.cp) + 1):

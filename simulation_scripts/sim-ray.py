@@ -60,6 +60,70 @@ def infected_rule(infected_neighbors_dict, T_list, susceptible_nodes, num_strain
                     break
     return new_nodes_list, susceptible_nodes
 
+def get_accumulated_mask_probs(mask_probs,):
+    '''
+    Input: 
+    mask_probs: A list of mask probabilities, where sum(mask_probs) = 1. 
+    Output: 
+    accumulated_mask_probs: An length 1 interval with each segment having the length of each ele in mask prob
+    e.g. 
+    mask_probs = [0.3, 0.2, 0.1, 0.4]
+    accumulated_mask_probs = [0, 0.3, 0.5, 0.6, 1]
+    '''
+    accumulated_mask_probs = [0]
+    
+    for idx, m in enumerate(mask_probs):
+        accumulated_mask_probs.append(m + accumulated_mask_probs[idx])
+    return accumulated_mask_probs
+
+def get_node_status(accumulated_mask_probs):
+    '''
+    Input:  accumulated_mask_probs
+    Output: int, corresponding to the idx of the mask_prob, 
+            the maks wearing type of a single node.
+    '''
+    roll_dice = random.random() # [0.0, 1.0)
+    distance = roll_dice - np.array(accumulated_mask_probs)
+    
+    mask_type = 0
+    for idx, dis in enumerate(distance):
+        if dis >= 0 and distance[idx + 1] < 0:
+            mask_type = idx
+            break
+    
+    return mask_type
+
+def get_mask_status(mask_probs, num_nodes):
+    '''
+    Input:  
+    mask_prob: A list of mask probabilities(len(mask_prob = num_mask_types)
+    num_nodes: Graph size
+    Output: 
+    mask_status: A list of mask wearing states for each node in the graph.
+    '''
+    accumulated_mask_probs = get_accumulated_mask_probs(mask_probs,)
+    mask_status = []
+    for i in range(num_nodes):
+        mask_type = get_node_status(accumulated_mask_probs)
+        mask_status.append(mask_type)
+    return mask_status
+
+def get_seed(start_strain, num_nodes):
+    seed = int(np.random.randint(0, num_nodes - 1))   
+    if start_strain == 1: # Select one node who wears a mask to be the seed(active) 
+        while mask_status[seed] != 0:
+            seed = int(np.random.randint(0, num_nodes - 1))
+        strain_set_1 = set([seed])
+        strain_set_2 = set()
+    elif start_strain == 2:
+        while mask_status[seed] != 1:
+            seed = int(np.random.randint(0, num_nodes - 1))
+        strain_set_1 = set()
+        strain_set_2 = set([int(np.random.randint(0, num_nodes - 1))])
+    else:
+        exit()
+    
+
 def evolution(g, T_list, mask_prob, start_strain):
     """
     Changes:
@@ -68,18 +132,15 @@ def evolution(g, T_list, mask_prob, start_strain):
     g.simplify()
     node_set = set(g.vs.indices)
     num_nodes = len(node_set)
-    mask_status = []
-    for i in range(num_nodes):
-        coin = 0 if random.random() < mask_prob else 1
-        mask_status += [coin] # 0 means mask, 1 means no mask
-        
+    mask_status = get_mask_status(mask_prob, num_nodes)
+    
     seed = int(np.random.randint(0, num_nodes - 1))   
-    if start_strain == 1: # Select one node who wears a mask to be the seed(active) 
+    if start_strain == 0: # Select one node who wears a mask to be the seed(active) 
         while mask_status[seed] != 0:
             seed = int(np.random.randint(0, num_nodes - 1))
         strain_set_1 = set([seed])
         strain_set_2 = set()
-    elif start_strain == 2:
+    elif start_strain == 1:
         while mask_status[seed] != 1:
             seed = int(np.random.randint(0, num_nodes - 1))
         strain_set_1 = set()
@@ -127,14 +188,15 @@ def main():
     paras_check(paras)
     mean_degree_list = get_mean_degree_list(paras)
     k_max, T_list = resolve_paras(paras)
-
+    num_mask_types = len(T_list)
+    
     ############ Start Exp ############
     now = datetime.now() # current date and time
     start_time = time.time()
     time_exp = now.strftime("%m%d%H:%M")
     print("-------Exp start at:" + time_exp + '-------')
 
-    for start_strain in [1, 2]:
+    for start_strain in range(num_mask_types):
         for mean_degree in mean_degree_list:
             for cp in range(1, int(paras.e/paras.cp) + 1): # cp order
                 results_ids = []
