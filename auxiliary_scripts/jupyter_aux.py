@@ -92,16 +92,17 @@ def load_sim_raw_results(m=0.45, T=0.6, tm1=0.3, tm2=0.7, msg='test', modelname=
     res['mdl'] = mean_degree_list
     return res
 
-def process_sim_res(results, checkpoint, thr):    
+def process_sim_res(results, checkpoint, thr, num_strain):    
     ttlEpidemicsSize = 0
     numEpidemics_1 = 0
     numEpidemics_2 = 0
     numEpidemics = 0
     Epidemics = []
-    EpidemicsPerSt = [0,0,0]
+    EpidemicsPerSt = [0 for i in range(num_strain)]
     fractionDic = dict()
     infectedPerStDic = dict()
     ttlFrac = 0
+    infSt_list = []
 
     for ii in range(checkpoint):
         fractionDic[ii] = results[ii][0] ###
@@ -110,8 +111,8 @@ def process_sim_res(results, checkpoint, thr):
             numEpidemics += 1
             ttlEpidemicsSize += fractionDic[ii]
             Epidemics.append(fractionDic[ii])
-            EpidemicsPerSt[0] += infectedPerStDic[ii][0]
-            EpidemicsPerSt[1] += infectedPerStDic[ii][1]
+            for strain in range(num_strain):
+                EpidemicsPerSt[strain] += infectedPerStDic[ii][strain]
 
         ttlFrac += fractionDic[ii]
 
@@ -123,37 +124,40 @@ def process_sim_res(results, checkpoint, thr):
     AvgValidSize = (div(ttlEpidemicsSize*1.0, numEpidemics))
     AvgSize = ttlFrac*1.0/checkpoint
     StdValidSize = (np.std(Epidemics))
-    infSt1 = (div(EpidemicsPerSt[0],numEpidemics))
-    infSt2 = (div(EpidemicsPerSt[1],numEpidemics))
-    return Prob_Emergence, AvgValidSize, infSt1, infSt2
+    infSt_list = [div(EpidemicsPerSt[strain],numEpidemics) for strain in range(num_strain)]
+    return Prob_Emergence, AvgValidSize, infSt_list
 
 def process_raw(raw, paras, thr,):
     processed_res_strains = []
+    num_strain = len(raw.keys())
     for start_strain, results in raw.items():
         processed_res = defaultdict(dict)
         for mean_degree, result in results.items():
             Prob_Emergence_list = []
             AvgValidSize_list = []
-            infSt1_list = []
-            infSt2_list = []
+            infSt_dic = dict()
+            for strain in range(num_strain):
+                infSt_dic[strain] = list()
             
             for cp, cp_res in result.items():
-                Prob_Emergence, AvgValidSize, infSt1, infSt2 = process_sim_res(cp_res, paras['cp'], thr=thr)
+                Prob_Emergence, AvgValidSize, infSt_list = process_sim_res(cp_res, paras['cp'], thr, num_strain)
                 Prob_Emergence_list.append(Prob_Emergence)
                 AvgValidSize_list.append(AvgValidSize)
-                infSt1_list.append(infSt1)
-                infSt2_list.append(infSt2)
+                
+                for strain in range(num_strain):
+                    infSt_dic[strain].append(infSt_list[strain])
                 
             processed_res['pe'][mean_degree] = np.array(Prob_Emergence_list).mean()
             processed_res['es'][mean_degree] = np.array(AvgValidSize_list).mean()
-            processed_res['es0'][mean_degree] = np.array(infSt1_list).mean()
-            processed_res['es1'][mean_degree] = np.array(infSt2_list).mean()
+            for strain in range(num_strain):
+                processed_res['es%d' %strain][mean_degree] = np.array(infSt_dic[strain]).mean()
         
         ordered_res = dict()
         ordered_res['pe']  = get_ordered_values_by_key(processed_res['pe'])
         ordered_res['es']  = get_ordered_values_by_key(processed_res['es'])
-        ordered_res['es0'] = get_ordered_values_by_key(processed_res['es0'])
-        ordered_res['es1'] = get_ordered_values_by_key(processed_res['es1'])
+        
+        for strain in range(num_strain):
+            ordered_res['es%d' %strain] = get_ordered_values_by_key(processed_res['es%d' %strain])
         
         processed_res_strains.append(ordered_res)
     return processed_res_strains
@@ -203,12 +207,6 @@ def append_legend_list(legend_list, mdl, sim_or_analysis):
     legend_list.append(first_word + "(mask) "   + range_str)
     legend_list.append(first_word + "(nomask) " + range_str)
     legend_list.append(first_word + "(total) "  + range_str)
-    
-# def plot_pe_anaylsis(res, ax, legend_list, marker='--'):
-#     ax.plot(res['mdl'], np.array(res['mask']) , 'g'+ marker )
-#     ax.plot(res['mdl'], np.array(res['nomask']), 'b' + marker)
-#     ax.plot(res['mdl'], np.array(res['mask']) * res['paras']['m'] + np.array(res['nomask']) * (1 - res['paras']['m']), 'r' + marker)
-#     append_legend_list(legend_list, res['mdl'], 'analysis')
     
 def plot_anaylsis(res, ax, legend_list, marker='--'):
 
