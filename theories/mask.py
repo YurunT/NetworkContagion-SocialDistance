@@ -99,6 +99,7 @@ def pA_vec(mean_degree, is_intermediate, T_list, m, A, k_max, num_mask_types):
 
 
 def func_root(A, mean_degree, T_list, m, k_max, num_mask_types):
+#     print("mean_degree in func_root: ", mean_degree)
     return np.array(pA_vec(mean_degree, True, T_list, m, A, k_max, num_mask_types)) - np.array(A)
 
 def get_EpidemicSize(mean_degree, paras, infection_sizes):
@@ -106,6 +107,7 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     S
     '''    
     k_max, T_list = resolve_paras(paras)
+#     print("T_list in get_EpidemicSize:", T_list)
     num_mask_types = len(T_list)
     init_A = np.ones(num_mask_types) * 0.9
     m = paras.m
