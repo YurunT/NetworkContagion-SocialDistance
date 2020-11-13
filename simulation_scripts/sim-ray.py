@@ -64,25 +64,28 @@ def get_accumulated_mask_probs(mask_probs,):
     
     for idx, m in enumerate(mask_probs):
         accumulated_mask_probs.append(m + accumulated_mask_probs[idx])
-        
+    
     return accumulated_mask_probs
 
-def get_node_status(accumulated_mask_probs):
+def get_node_status(mask_roll_dice, accumulated_mask_probs):
     '''
     Input:  accumulated_mask_probs
     Output: int, corresponding to the idx of the mask_prob, 
             the maks wearing type of a single node.
     '''
-    roll_dice = random.random() # [0.0, 1.0)
-    distance = roll_dice - np.array(accumulated_mask_probs)
     
-    mask_type = 0
-    for idx, dis in enumerate(distance):
-        if dis >= 0 and distance[idx + 1] < 0:
-            mask_type = idx
-            break
-            
-    return mask_type
+    mask_status = []
+    for roll_dice in mask_roll_dice:
+        distance = roll_dice - np.array(accumulated_mask_probs)
+
+        mask_type = -1
+        for idx, dis in enumerate(distance):
+            if dis >= 0 and distance[idx + 1] < 0:
+                mask_type = idx
+                break
+        mask_status.append(mask_type)
+        
+    return mask_status
 
 def get_mask_status(mask_probs, num_nodes):
     '''
@@ -93,10 +96,8 @@ def get_mask_status(mask_probs, num_nodes):
     mask_status: A list of mask wearing states for each node in the graph.
     '''
     accumulated_mask_probs = get_accumulated_mask_probs(mask_probs,)
-    mask_status = []
-    for i in range(num_nodes):
-        mask_type = get_node_status(accumulated_mask_probs)
-        mask_status.append(mask_type)
+    mask_roll_dice = np.random.rand(num_nodes)
+    mask_status = get_node_status(mask_roll_dice, accumulated_mask_probs)
         
     return mask_status
 
