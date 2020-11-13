@@ -37,6 +37,12 @@ def paras_check(paras):
         print("Please check m list!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
+    if len(paras.tm1) != len(paras.m):
+        print("------------ CMD INPUT INVALID ------------")
+        print("Error: len(tm1) %d not matching len(m) %d!" %(len(paras.tm1), len(paras.m)))
+        print("Please specify correct num of in/out-ward effeciencies and mask probs!")
+        print("------------ CMD INPUT INVALID ------------")
+        assert False
     if paras.modelname not in model_names:
         print("------------ CMD INPUT INVALID ------------")
         print("Error: NO model named %s!" %paras.modelname)
