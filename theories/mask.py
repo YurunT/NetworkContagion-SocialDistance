@@ -78,31 +78,35 @@ def P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types):
     p_ab = get_p_ab(i, is_intermediate, k, T_list, A, num_mask_types - 1, 0, m, n_range, vec_N, num_mask_types) 
     return p_ab
 
-def condition_on_neighbors(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types):    
+def condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types):    
     pa_L = 0
-    for k in range(1, k_max):
+    for k in range(0, k_max):
         prob_r = poisson.pmf(k, mean_degree)
+        
         if is_intermediate: # intermediate q using excess degree distribution
             pb = div(prob_r * k, mean_degree)
         else:
             pb = prob_r
-        p_ab = P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types)
+            
+        if item == 'es':
+            p_ab = P_A_given_B(i, is_intermediate, k, T_list, vec, m, num_mask_types)
+        else:
+            p_ab = PE_B(i, is_intermediate, k, vec, T_list, m)
+            
         pa_L += p_ab * pb
     return pa_L
 
 def get_var_vec(item, mean_degree, is_intermediate, T_list, m, vec, k_max, num_mask_types):
     P_A_list = []
+    
     if item not in item_names or item == 'sim':
         print("get_var_vec: item value of %s incorrect!" %item)
         print("Possible options are(except sim):", item_names)
         assert False
         
-    if item == 'es':
-        for i in range(num_mask_types):
-            P_A_list.append(condition_on_neighbors(i, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
-    else:
-        for i in range(num_mask_types):
-            P_A_list.append(P_E(i, is_intermediate, mean_degree, T_list, m, vec, k_max))
+    for i in range(num_mask_types):
+        P_A_list.append(condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
+
 
     return np.array(P_A_list)
 
@@ -130,19 +134,6 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     return P_A_list, A
 
 ########### Mask Model PE Analysis -- Parellel ########### 
-def P_E(i, is_intermediate, mean_degree, T_list, m, E_list, k_max):
-    res = 0
-    for k in range(1, k_max):
-        prob_r = poisson.pmf(k, mean_degree)
-        
-        if is_intermediate: # intermediate q using excess degree distribution
-            pb = div(prob_r * k, mean_degree)
-        else:
-            pb = prob_r
-            
-        res += pb * PE_B(i, is_intermediate, k, E_list, T_list, m)
-    return res
-
 def PE_B(i, is_intermediate, k, E_list, T_list, m):
     res = 0
     
@@ -194,7 +185,7 @@ def get_ProbEmergence(mean_degree, paras, pes):
     num_mask_types = len(T_list)
     init_E = np.ones(num_mask_types) * 0.1
     E_list = optimize.fsolve(func_root_pe, init_E, args=(mean_degree, T_list, paras.m, k_max, num_mask_types), xtol=1e-6)    
-    E_list = 1 - get_var_vec('pe', mean_degree, False,  T_list, paras.m, E_list, k_max, num_mask_types)
+    E_list = 1 - get_var_vec('pe', mean_degree, False, T_list, paras.m, E_list, k_max, num_mask_types)
     for i in range(num_mask_types):
         pes[i][mean_degree] = E_list[i]
     pes['ttl'][mean_degree]   = np.dot(E_list, paras.m)
