@@ -25,6 +25,7 @@ def P_A_given_R(i, T_list, vec_I, end):
     return 1 - get_par(i, T_list, end, 0, vec_I)
 
 def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
+    ####### !!!!! PE has no par
     one_minus_A = 1 - np.array(A)
     p_abn = 0
     vec_N = vec_N.astype(int)
@@ -39,13 +40,16 @@ def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
         
         return p_a_given_r
 
-def P_A_given_B_N(i, k, vec_N, T_list, A, num_mask_types,):
+def condition_on_active_nodes(i, item, k, vec_N, T_list, A, num_mask_types,):
     vec_I = np.zeros(num_mask_types)
-    p_abn = get_p_abn(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
+    if item == 'es':
+        p_abn = get_p_abn(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
     return p_abn
 
-def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N, num_mask_types):
+def recursion_N(i, item, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N, num_mask_types):
     '''
+    Recursion through all the possible values for the vec N = (N1, N2, ..., NM)
+    
     Input:  end: The last index of vec N, end = M - 1. M refers to the M in the derivation notebook.
             idx: Loop over all the possible values for N_idx in vector N, 0 <= idx <= end (M - 1)
             m  : List of mask type possibibities.
@@ -55,19 +59,19 @@ def get_p_ab(i, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N, nu
     if idx < end: # not the last ele in the N vec
         for n_i in range(n_i_range):
             vec_N[idx] = n_i
-            pab += (m[idx] ** n_i) * get_p_ab(i, is_intermediate, k, T_list, A, end, idx + 1, m, n_i_range - n_i, vec_N, num_mask_types)
+            pab += (m[idx] ** n_i) * recursion_N(i, item, is_intermediate, k, T_list, A, end, idx + 1, m, n_i_range - n_i, vec_N, num_mask_types)
         return pab
     else:
         n_end = n_i_range - 1
         vec_N[idx] = n_end
         pab = (m[idx] ** n_end)   
         multinomial_coeffecient = np.exp(get_log_multinomial_coeffecient(vec_N))
-        p_abn = P_A_given_B_N(i, k, vec_N, T_list, A, num_mask_types)
+        p_abn = condition_on_active_nodes(i, item, k, vec_N, T_list, A, num_mask_types)
         pab *= (multinomial_coeffecient * p_abn)
         return pab
 
 
-def P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types):
+def condition_on_mask_types(i, item, is_intermediate, k, T_list, A, m, num_mask_types):
     p_ab = 0
     if is_intermediate:
         n_range = k
@@ -75,7 +79,7 @@ def P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types):
         n_range = k + 1
     
     vec_N = np.zeros(num_mask_types) # N = (N1, N2, ..., NM) [N_0, ..., N_M-1] [0, 0]
-    p_ab = get_p_ab(i, is_intermediate, k, T_list, A, num_mask_types - 1, 0, m, n_range, vec_N, num_mask_types) 
+    p_ab = recursion_N(i, item, is_intermediate, k, T_list, A, num_mask_types - 1, 0, m, n_range, vec_N, num_mask_types) 
     return p_ab
 
 def condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types):    
@@ -89,7 +93,7 @@ def condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec
             pb = prob_r
             
         if item == 'es':
-            p_ab = P_A_given_B(i, is_intermediate, k, T_list, vec, m, num_mask_types)
+            p_ab = condition_on_mask_types(i, item, is_intermediate, k, T_list, vec, m, num_mask_types)
         else:
             p_ab = PE_B(i, is_intermediate, k, vec, T_list, m)
             
