@@ -78,7 +78,7 @@ def P_A_given_B(i, is_intermediate, k, T_list, A, m, num_mask_types):
     p_ab = get_p_ab(i, is_intermediate, k, T_list, A, num_mask_types - 1, 0, m, n_range, vec_N, num_mask_types) 
     return p_ab
 
-def P_A(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types):    
+def condition_on_neighbors(i, is_intermediate, mean_degree, T_list, m, A, k_max, num_mask_types):    
     pa_L = 0
     for k in range(1, k_max):
         prob_r = poisson.pmf(k, mean_degree)
@@ -99,7 +99,7 @@ def get_var_vec(item, mean_degree, is_intermediate, T_list, m, vec, k_max, num_m
         
     if item == 'es':
         for i in range(num_mask_types):
-            P_A_list.append(P_A(i, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
+            P_A_list.append(condition_on_neighbors(i, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
     else:
         for i in range(num_mask_types):
             P_A_list.append(P_E(i, is_intermediate, mean_degree, T_list, m, vec, k_max))
@@ -132,11 +132,11 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
 ########### Mask Model PE Analysis -- Parellel ########### 
 def P_E(i, is_intermediate, mean_degree, T_list, m, E_list, k_max):
     res = 0
-    for k in range(0, k_max):
+    for k in range(1, k_max):
         prob_r = poisson.pmf(k, mean_degree)
         
         if is_intermediate: # intermediate q using excess degree distribution
-            pb = prob_r * k * 1.0 / mean_degree 
+            pb = div(prob_r * k, mean_degree)
         else:
             pb = prob_r
             
