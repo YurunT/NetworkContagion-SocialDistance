@@ -12,7 +12,6 @@ sys.path.append(os.path.abspath("../auxiliary_scripts/"))
 from main_aux import *
 from theory_aux import * 
 
-########### Mask Model ES Analysis -- Parellel ########### 
 def get_par(i, T_list, end, idx, vec_I):
     mid_res = 1
     if idx <= end:
@@ -25,7 +24,6 @@ def P_A_given_R(i, T_list, vec_I, end):
     return 1 - get_par(i, T_list, end, 0, vec_I)
 
 def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
-    ####### !!!!! PE has no par
     one_minus_A = 1 - np.array(A)
     p_abn = 0
     vec_N = vec_N.astype(int)
@@ -41,7 +39,6 @@ def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
         return p_a_given_r
     
 def get_extinction(i, T_list, A, end, idx, vec_N, vec_I,):
-    ####### !!!!! PE has no par
     p_abn = 0
     vec_N = vec_N.astype(int)
     
@@ -58,7 +55,7 @@ def condition_on_active_nodes(i, item, k, vec_N, T_list, A, num_mask_types,):
     vec_I = np.zeros(num_mask_types)
     if item == 'es':
         p_abn = get_p_abn(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
-    else:
+    else: # 'pe'
         p_abn = get_extinction(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
     return p_abn
 
@@ -113,25 +110,21 @@ def condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec
     return pa_L
 
 def get_var_vec(item, mean_degree, is_intermediate, T_list, m, vec, k_max, num_mask_types):
-    P_A_list = []
-    
+    new_vec = []
+        
+    for i in range(num_mask_types):
+        new_vec.append(condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
+        
+    return np.array(new_vec)
+
+
+def func_root(vec, item, mean_degree, T_list, m, k_max, num_mask_types):
     if item not in item_names or item == 'sim':
         print("get_var_vec: item value of %s incorrect!" %item)
         print("Possible options are(except sim):", item_names)
         assert False
         
-    for i in range(num_mask_types):
-        P_A_list.append(condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec, k_max, num_mask_types))
-
-
-    return np.array(P_A_list)
-
-
-def func_root(vec, item, mean_degree, T_list, m, k_max, num_mask_types):
     return np.array(get_var_vec(item, mean_degree, True, T_list, m, vec, k_max, num_mask_types)) - np.array(vec)
-
-# def func_root_pe(E_list, mean_degree, T_list, m, k_max, num_mask_types):
-#     return get_var_vec('pe', mean_degree, True, T_list, m, E_list, k_max, num_mask_types) - np.array(E_list)
 
 def get_EpidemicSize(mean_degree, paras, infection_sizes):
     '''
