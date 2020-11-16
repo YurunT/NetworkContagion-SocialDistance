@@ -39,11 +39,27 @@ def get_p_abn(i, T_list, A, end, idx, vec_N, vec_I,):
         p_a_given_r = P_A_given_R(i, T_list, vec_I, end)
         
         return p_a_given_r
+    
+def get_extinction(i, T_list, A, end, idx, vec_N, vec_I,):
+    ####### !!!!! PE has no par
+    p_abn = 0
+    vec_N = vec_N.astype(int)
+    
+    if idx <= end:
+        for ki in range(vec_N[idx] + 1):
+            vec_I[idx] = ki
+            p_abn += comb(vec_N[idx], ki) * (T_list[i][idx] ** ki) * ((1 - T_list[i][idx]) ** (vec_N[idx] - ki)) * (A[idx] ** ki) * get_extinction(i, T_list, A, end, idx + 1, vec_N, vec_I,)
+        return p_abn
+    else:
+        return 1
+        
 
 def condition_on_active_nodes(i, item, k, vec_N, T_list, A, num_mask_types,):
     vec_I = np.zeros(num_mask_types)
     if item == 'es':
         p_abn = get_p_abn(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
+    else:
+        p_abn = get_extinction(i, T_list, A, num_mask_types - 1, 0, vec_N, vec_I,)
     return p_abn
 
 def recursion_N(i, item, is_intermediate, k, T_list, A, end, idx, m, n_i_range, vec_N, num_mask_types):
@@ -92,11 +108,7 @@ def condition_on_neighbors(i, item, is_intermediate, mean_degree, T_list, m, vec
         else:
             pb = prob_r
             
-        if item == 'es':
-            p_ab = condition_on_mask_types(i, item, is_intermediate, k, T_list, vec, m, num_mask_types)
-        else:
-            p_ab = PE_B(i, is_intermediate, k, vec, T_list, m)
-            
+        p_ab = condition_on_mask_types(i, item, is_intermediate, k, T_list, vec, m, num_mask_types)
         pa_L += p_ab * pb
     return pa_L
 
@@ -115,8 +127,11 @@ def get_var_vec(item, mean_degree, is_intermediate, T_list, m, vec, k_max, num_m
     return np.array(P_A_list)
 
 
-def func_root(A, mean_degree, T_list, m, k_max, num_mask_types):
-    return np.array(get_var_vec('es', mean_degree, True, T_list, m, A, k_max, num_mask_types)) - np.array(A)
+def func_root(vec, item, mean_degree, T_list, m, k_max, num_mask_types):
+    return np.array(get_var_vec(item, mean_degree, True, T_list, m, vec, k_max, num_mask_types)) - np.array(vec)
+
+# def func_root_pe(E_list, mean_degree, T_list, m, k_max, num_mask_types):
+#     return get_var_vec('pe', mean_degree, True, T_list, m, E_list, k_max, num_mask_types) - np.array(E_list)
 
 def get_EpidemicSize(mean_degree, paras, infection_sizes):
     '''
@@ -126,9 +141,9 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     num_mask_types = len(T_list)
     init_A = np.ones(num_mask_types) * 0.9
     m = paras.m
-
-    A_root = optimize.fsolve(func_root, init_A, args=(mean_degree, T_list, m, k_max, num_mask_types))
-    P_A_list = get_var_vec('es', mean_degree, False,  T_list, paras.m, A_root, k_max, num_mask_types)
+    item = 'es'
+    A_root = optimize.fsolve(func_root, init_A, args=(item, mean_degree, T_list, m, k_max, num_mask_types))
+    P_A_list = get_var_vec(item, mean_degree, False,  T_list, paras.m, A_root, k_max, num_mask_types)
     A = np.dot(P_A_list, m)
     print(mean_degree, P_A_list,)
     
@@ -137,59 +152,13 @@ def get_EpidemicSize(mean_degree, paras, infection_sizes):
     infection_sizes['ttl'][mean_degree] = A
     return P_A_list, A
 
-########### Mask Model PE Analysis -- Parellel ########### 
-def PE_B(i, is_intermediate, k, E_list, T_list, m):
-    res = 0
-    
-    if is_intermediate: # intermediate q, powers sum up to k - 1
-        n_range = k
-    else:               # generation 0, powers sum up to k
-        n_range = k + 1
-        
-    for n in range(n_range):
-        pe_bn = PE_BN(i, is_intermediate, n, k, E_list, T_list, m)
-        res += pe_bn * comb(n_range - 1, n) * (m[0] ** n) * (m[1] ** (n_range - 1 - n))
-    return res
-
-def PE_BN(i, is_intermediate, n, k, E_list, T_list, m):
-    T1 = T_list[0][1]
-    T2 = T_list[0][0]
-    T3 = T_list[1][1]
-    T4 = T_list[1][0]
-    res = 0 
-    
-    if i == 0:
-        t_mask = T2
-        t_no_mask = T1
-    else:
-        t_mask = T4
-        t_no_mask = T3
-    
-    one_minus_mask = 1 - t_mask
-    one_minus_no_mask = 1 - t_no_mask
-        
-    if is_intermediate:
-        k_range = k 
-    else:
-        k_range = k + 1
-        
-    for k0 in range(n + 1):
-        for k1 in range(k_range - n):
-            res += comb(n, k0) * (t_mask ** k0) * (one_minus_mask ** (n - k0)) *\
-            comb(k_range - 1 - n, k1) * (t_no_mask ** k1) * (one_minus_no_mask ** (k_range - 1 - n - k1)) *\
-            (E_list[0] ** k0) * (E_list[1] ** k1)
-            
-    return res
-
-def func_root_pe(E_list, mean_degree, T_list, m, k_max, num_mask_types):
-    return get_var_vec('pe', mean_degree, True, T_list, m, E_list, k_max, num_mask_types) - np.array(E_list)
-
 def get_ProbEmergence(mean_degree, paras, pes):
     k_max, T_list = resolve_paras(paras)
     num_mask_types = len(T_list)
     init_E = np.ones(num_mask_types) * 0.1
-    E_list = optimize.fsolve(func_root_pe, init_E, args=(mean_degree, T_list, paras.m, k_max, num_mask_types), xtol=1e-6)    
-    E_list = 1 - get_var_vec('pe', mean_degree, False, T_list, paras.m, E_list, k_max, num_mask_types)
+    item = 'pe'
+    E_list = optimize.fsolve(func_root, init_E, args=(item, mean_degree, T_list, paras.m, k_max, num_mask_types), xtol=1e-6)   
+    E_list = 1 - get_var_vec(item, mean_degree, False, T_list, paras.m, E_list, k_max, num_mask_types)
     for i in range(num_mask_types):
         pes[i][mean_degree] = E_list[i]
     pes['ttl'][mean_degree]   = np.dot(E_list, paras.m)
