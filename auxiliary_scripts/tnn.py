@@ -19,10 +19,10 @@ def get_tmask_list(paras):
 def generate_new_transmissibilities_mask(tmask_list, T,):
     '''
     Input:  
-            infectious - T ->|- T * inward_e -> |- T * inward_e * out_e -> susceptible
+            infectious - T ->|- T * outward_e -> |- T * outward_e * inward_e -> susceptible
             ----- Tij = Tmaski,1 * Tmaskj,2 * T -----
             
-            effeciency_list: List of (inward effeciency(notated as 1), outward effeciency(notated as 2))
+            effeciency_list: List of (outward effeciency(notated as 1), inward effeciency(notated as 2))
             T: Orignial transmissibility of the virus
     Output: 
             List of Tij(T_list):[[T11, T12, ..., T1M],

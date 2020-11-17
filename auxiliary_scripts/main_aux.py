@@ -16,13 +16,13 @@ def paras_check(paras):
     if paras.tm1 is None:
         print("------------ CMD INPUT INVALID ------------")
         print("Error: NO tm1 specified!")
-        print("Please specify list of inward effeciencies!")
+        print("Please specify list of OUTward effeciencies!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
     if paras.tm2 is None:
         print("------------ CMD INPUT INVALID ------------")
         print("Error: NO tm2 specified!")
-        print("Please specify list of outward effeciencies!")
+        print("Please specify list of INward effeciencies!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
     if len(paras.tm2) != len(paras.tm1):
@@ -40,7 +40,7 @@ def paras_check(paras):
     if len(paras.tm1) != len(paras.m):
         print("------------ CMD INPUT INVALID ------------")
         print("Error: len(tm1) %d not matching len(m) %d!" %(len(paras.tm1), len(paras.m)))
-        print("Please specify correct num of in/out-ward effeciencies and mask probs!")
+        print("Please specify correct num of out/in-ward effeciencies and mask probs!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
     if paras.modelname not in model_names:
