@@ -66,8 +66,9 @@ def paras_check(paras):
 def resolve_paras(paras):
     num_cores = min(paras.nc,multiprocessing.cpu_count())
     rho = 1.0 / paras.n
-#     k_max = 4 * paras.maxd
-    k_max = 20
+    k_max = paras.maxd * 2
+    print("k_max:", k_max)
+#     k_max = 20
     tmask_list = get_tmask_list(paras)
     T_list = generate_new_transmissibilities_mask(tmask_list, paras.T,)
     
