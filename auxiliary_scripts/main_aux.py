@@ -31,9 +31,11 @@ def paras_check(paras):
         print("Please specify correct num of in/out-ward effeciencies!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
-    if sum(paras.m) != 1:
+    if sum(paras.m) < 0.99:
         print("------------ CMD INPUT INVALID ------------")
         print("Error: sum(m) should equals 1!")
+        print("Your m is:", paras.m)
+        print("Your m sum up to:", sum(paras.m))
         print("Please check m list!")
         print("------------ CMD INPUT INVALID ------------")
         assert False
